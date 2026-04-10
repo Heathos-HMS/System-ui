@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-ARG FLUTTER_VERSION=3.19.6
+ARG FLUTTER_VERSION=3.32.0
 RUN git clone https://github.com/flutter/flutter.git /flutter \
     --branch ${FLUTTER_VERSION} \
     --single-branch \

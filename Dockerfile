@@ -2,8 +2,6 @@ FROM debian:bookworm-slim AS builder
 
 RUN apt-get update && apt-get install -y \
     curl git unzip xz-utils zip libglu1-mesa wget \
-    libgtk-3-0 libstdc++6 libnss3 libx11-6 libxrender1 \
-    libxrandr2 libxi6 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,7 +17,7 @@ ENV FLUTTER_STORAGE_BASE_URL=https://storage.googleapis.com
 
 
 # Fully initiallize Flutter
-RUN flutter doctor -v || true
+RUN flutter precache --web
 RUN flutter config --enable-web
 
 

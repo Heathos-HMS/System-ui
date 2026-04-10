@@ -2,26 +2,41 @@ FROM debian:bookworm-slim AS builder
 
 RUN apt-get update && apt-get install -y \
     curl git unzip xz-utils zip libglu1-mesa wget \
+    libgtk-3-0 libstdc++6 libnss3 libx11-6 libxrender1 \
+    libxrandr2 libxi6 \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+ARG FLUTTER_VERSION=3.19.6
 RUN git clone https://github.com/flutter/flutter.git /flutter \
-    --branch stable --single-branch --depth 1
+    --branch ${FLUTTER_VERSION} \
+    --single-branch \
+    --depth 1
 
 ENV PATH="/flutter/bin:/flutter/bin/cache/dart-sdk/bin:$PATH"
+ENV PUB_HOSTED_URL=https://pub.dev
+ENV FLUTTER_STORAGE_BASE_URL=https://storage.googleapis.com
 
-# Skip precache — just enable web and build
+
+# Fully initiallize Flutter
+RUN flutter doctor -v || true
 RUN flutter config --enable-web
+
 
 WORKDIR /app
 COPY pubspec.yaml ./
 RUN flutter pub get
 COPY . .
-RUN flutter build web --release
+RUN flutter build web --release --no-tree-shake-icons
 
 FROM nginx:alpine
+RUN rm /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/build/web /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+
+ENV PORT=10000
+EXPOSE 10000
+
 CMD ["nginx", "-g", "daemon off;"]
 
 

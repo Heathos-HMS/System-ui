@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class AdminLoginPage extends StatefulWidget {
-  const AdminLoginPage({super.key});
+class DoctorLoginPage extends StatefulWidget {
+  const DoctorLoginPage({super.key});
 
   @override
-  State<AdminLoginPage> createState() => _AdminLoginPageState();
+  State<DoctorLoginPage> createState() => _DoctorLoginPageState();
 }
 
-class _AdminLoginPageState extends State<AdminLoginPage> {
+class _DoctorLoginPageState extends State<DoctorLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

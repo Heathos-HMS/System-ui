@@ -32,9 +32,9 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/build/web /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-ENV PORT=10000
-EXPOSE 10000
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+CMD ["/bin/sh", "-c", "sed -i 's/listen 80/listen '${PORT:-8080}'/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
 
 

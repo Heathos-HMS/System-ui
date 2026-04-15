@@ -23,7 +23,7 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-const String _baseUrl = 'https://heathos-app-latest.onrender.com';
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── NAV INDEX CONSTANTS — update these as you add more pages ────────────────
 const int _kNavOverview = 0;
@@ -93,7 +93,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         break;
 
       case _kNavPatient:
-        Navigator.push(context, MaterialPageRoute(builder: (_) =>  PatientDashboard()));
+        Navigator.push(context, MaterialPageRoute(builder: (_) =>  PatientListPage()));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Patient page coming soon.')),
         );

@@ -9,7 +9,7 @@ import 'admin_signup_page.dart';
 
 // Base URL — Flutter Web uses localhost directly 
 // Ensure your Spring Boot backend has CORS enabled for http://localhost
-const String _baseUrl = 'https://heathos-api.onrender.com/api/auth/login';
+const String _baseUrl = 'https://heathos-api.onrender.com';
 //'http://localhost:8080/api';
 
 class AdminLoginPage extends StatefulWidget {
@@ -59,7 +59,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     });
 
     try {
-      final uri = Uri.parse('$_baseUrl/auth/login');
+      final uri = Uri.parse('$_baseUrl/api/auth/login');
       debugPrint('[Login] POST → $uri');
 
       final response = await http

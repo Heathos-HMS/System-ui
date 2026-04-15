@@ -10,7 +10,7 @@ import 'admin_login_page.dart';
 // ── Base URL ─────────────────────────────────────────────────────────────────
 // Flutter Web runs in the browser — localhost refers to your own machine.
 // Make sure your Spring Boot backend has CORS enabled for http://localhost
-const String _baseUrl = 'https://heathos-api.onrender.com/api/auth/register';
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 //'http://localhost:8080/api';
 
@@ -91,7 +91,7 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
     });
 
     try {
-      final uri = Uri.parse('$_baseUrl/auth/register');
+      final uri = Uri.parse('$_baseUrl/api/auth/register');
       debugPrint('[SignUp] POST → $uri');
 
       final response = await http

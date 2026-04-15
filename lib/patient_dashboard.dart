@@ -419,7 +419,7 @@ class _TopBar extends StatefulWidget {
 
 class _TopBarState extends State<_TopBar> {
   Future<void> _pickProfileImage() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
     if (result != null && result.files.first.bytes != null) {
       widget.onProfileImageChanged(result.files.first.bytes!);
     }

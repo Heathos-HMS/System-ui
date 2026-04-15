@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
-import 'patient_registration_page.dart';
+import 'patient_dashboard.dart';
+import 'patient_reg.dart';
 
-class StaffUIPage extends StatelessWidget {
+class StaffDashboard extends StatefulWidget {
+  const StaffDashboard({super.key});
+
+  @override
+  State<StaffDashboard> createState() => _StaffDashboardState();
+}
+
+class _StaffDashboardState extends State<StaffDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       appBar: AppBar(title: Text('HEATHOS HMS')),
       body: GridView.count(
         crossAxisCount: 2,
@@ -44,3 +53,4 @@ class StaffUIPage extends StatelessWidget {
     );
   }
 }
+

@@ -1,7 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 
+// ── Page imports — add each file as you create it ────────────────────────────
+import 'admin_login_page.dart';
+import 'admin_profile.dart';
+import 'patient_dashboard.dart';   // uncomment when ready
+import 'doctor_list.dart';    // uncomment when ready
+import 'nurse_list.dart';     // uncomment when ready
 
-// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const kTeal = Color(0xFF0D7B6B);
 const kTealLight = Color(0xFF1A9E8A);
@@ -12,7 +23,28 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-// ─── ADMIN DASHBOARD ────────────────────────────────────────────────────────
+const String _baseUrl = 'https://heathos-app-latest.onrender.com';
+
+// ─── NAV INDEX CONSTANTS — update these as you add more pages ────────────────
+const int _kNavOverview = 0;
+const int _kNavPatient = 1;
+const int _kNavDoctor = 2;
+const int _kNavNurse = 3;
+
+// ─── SEARCH RESULT MODEL ─────────────────────────────────────────────────────
+
+class _SearchResult {
+  final String name;
+  final String category;
+  final String subtitle;
+  const _SearchResult({
+    required this.name,
+    required this.category,
+    required this.subtitle,
+  });
+}
+
+// ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -22,20 +54,87 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  int _selectedIndex = 0;
+  int _selectedIndex = _kNavOverview;
+  Uint8List? _profileImageBytes;
 
   final List<_NavItem> _navItems = const [
-    _NavItem(icon: Icons.dashboard_rounded, label: 'Overview'),
-    _NavItem(icon: Icons.person_rounded, label: 'Profile'),
-    _NavItem(icon: Icons.calendar_today_rounded, label: 'Appointment'),
-    _NavItem(icon: Icons.personal_injury_rounded, label: 'Patient'),
-    _NavItem(icon: Icons.medical_services_rounded, label: 'Doctor'),
-    _NavItem(icon: Icons.health_and_safety_rounded, label: 'Nurse'),
-    _NavItem(icon: Icons.science_rounded, label: 'Lab Technician'),
-    _NavItem(icon: Icons.medication_rounded, label: 'Pharmacy'),
-    _NavItem(icon: Icons.admin_panel_settings_rounded, label: 'Administrative Staff'),
-    _NavItem(icon: Icons.receipt_long_rounded, label: 'Billings'),
+    _NavItem(
+      icon: Icons.dashboard_rounded,
+      label: 'Overview',
+      index: _kNavOverview,
+    ),
+    _NavItem(
+      icon: Icons.personal_injury_rounded,
+      label: 'Patient',
+      index: _kNavPatient,
+    ),
+    _NavItem(
+      icon: Icons.medical_services_rounded,
+      label: 'Doctor',
+      index: _kNavDoctor,
+    ),
+    _NavItem(
+      icon: Icons.health_and_safety_rounded,
+      label: 'Nurse',
+      index: _kNavNurse,
+    ),
   ];
+
+  // ── Navigation helpers ────────────────────────────────────────────────────
+
+  /// Called when a sidebar nav item is tapped.
+  /// Overview stays on this page; others push to their own page.
+  void _onNavItemSelected(int index) {
+    setState(() => _selectedIndex = index);
+
+    switch (index) {
+      case _kNavOverview:
+        // Already on this page — do nothing
+        break;
+
+      case _kNavPatient:
+        Navigator.push(context, MaterialPageRoute(builder: (_) =>  PatientDashboard()));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Patient page coming soon.')),
+        );
+        break;
+
+      case _kNavDoctor:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const DoctorListPage()));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Doctor page coming soon.')),
+        );
+        break;
+
+      case _kNavNurse:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const NurseList()));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nurse page coming soon.')),
+        );
+        break;
+    }
+  }
+
+  /// Logout — clears the entire navigation stack and returns to login.
+  void _logout() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminLoginPage()),
+      (route) => true,
+    );
+  }
+
+  /// Profile — pushes to AdminProfilePage.
+  void _goToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AdminProfilePage()),
+    );
+  }
+
+  void _onProfileImageChanged(Uint8List bytes) {
+    setState(() => _profileImageBytes = bytes);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,37 +142,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
       backgroundColor: kBackground,
       body: Row(
         children: [
-          // ── Sidebar ──
+          // ── Sidebar ──────────────────────────────────────────────────────
           _Sidebar(
             navItems: _navItems,
             selectedIndex: _selectedIndex,
-            onItemSelected: (i) => setState(() => _selectedIndex = i),
+            onItemSelected: _onNavItemSelected,
+            onLogout: _logout,
           ),
-          // ── Main content ──
-          const Expanded(child: _MainContent()),
+          // ── Main content ─────────────────────────────────────────────────
+          Expanded(
+            child: _MainContent(
+              profileImageBytes: _profileImageBytes,
+              onProfileImageChanged: _onProfileImageChanged,
+              onLogout: _logout,
+              onGoToProfile: _goToProfile,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ─── SIDEBAR ────────────────────────────────────────────────────────────────
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
 class _NavItem {
   final IconData icon;
   final String label;
-  const _NavItem({required this.icon, required this.label});
+  final int index;
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.index,
+  });
 }
 
 class _Sidebar extends StatelessWidget {
   final List<_NavItem> navItems;
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
+  final VoidCallback onLogout;
 
   const _Sidebar({
     required this.navItems,
     required this.selectedIndex,
     required this.onItemSelected,
+    required this.onLogout,
   });
 
   @override
@@ -93,19 +207,9 @@ class _Sidebar extends StatelessWidget {
                 Container(
                   width: 38,
                   height: 38,
-                  decoration: BoxDecoration(
-                    color: kWhite,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'H',
-                      style: TextStyle(
-                        color: kTeal,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                      ),
-                    ),
+                  child: Image.asset(
+                    'assets/images/Group.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -127,14 +231,12 @@ class _Sidebar extends StatelessWidget {
             child: ListView.builder(
               padding: EdgeInsets.zero,
               itemCount: navItems.length,
-              itemBuilder: (context, index) {
-                return _SidebarItem(
-                  icon: navItems[index].icon,
-                  label: navItems[index].label,
-                  isSelected: selectedIndex == index,
-                  onTap: () => onItemSelected(index),
-                );
-              },
+              itemBuilder: (_, i) => _SidebarItem(
+                icon: navItems[i].icon,
+                label: navItems[i].label,
+                isSelected: selectedIndex == navItems[i].index,
+                onTap: () => onItemSelected(navItems[i].index),
+              ),
             ),
           ),
 
@@ -142,12 +244,13 @@ class _Sidebar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
             child: InkWell(
-              onTap: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onTap: onLogout, // ← navigates to AdminLoginPage
               borderRadius: BorderRadius.circular(10),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Row(
                   children: const [
                     Icon(Icons.logout_rounded, color: kWhite, size: 20),
@@ -210,8 +313,8 @@ class _SidebarItemState extends State<_SidebarItem> {
               color: widget.isSelected
                   ? kWhite.withOpacity(0.20)
                   : _hovering
-                      ? kWhite.withOpacity(0.10)
-                      : Colors.transparent,
+                  ? kWhite.withOpacity(0.10)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               border: widget.isSelected
                   ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
@@ -243,38 +346,44 @@ class _SidebarItemState extends State<_SidebarItem> {
   }
 }
 
-// ─── MAIN CONTENT ───────────────────────────────────────────────────────────
+// ─── MAIN CONTENT ────────────────────────────────────────────────────────────
 
 class _MainContent extends StatelessWidget {
-  const _MainContent();
+  final Uint8List? profileImageBytes;
+  final ValueChanged<Uint8List> onProfileImageChanged;
+  final VoidCallback onLogout;
+  final VoidCallback onGoToProfile;
+
+  const _MainContent({
+    required this.profileImageBytes,
+    required this.onProfileImageChanged,
+    required this.onLogout,
+    required this.onGoToProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const _TopBar(),
+        _TopBar(
+          profileImageBytes: profileImageBytes,
+          onProfileImageChanged: onProfileImageChanged,
+          onLogout: onLogout,
+          onGoToProfile: onGoToProfile,
+        ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Doctors pill + date ──
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
-                    _DoctorsPill(),
-                    Spacer(),
-                    _DateWidget(),
-                  ],
+                  children: const [_DoctorsPill(), Spacer(), _LiveDateTime()],
                 ),
                 const SizedBox(height: 24),
-
-                // ── Stats cards ──
                 const _StatsRow(),
                 const SizedBox(height: 28),
-
-                // ── Chart ──
                 const _PatientStatsCard(),
               ],
             ),
@@ -286,10 +395,192 @@ class _MainContent extends StatelessWidget {
   }
 }
 
-// ─── TOP BAR ────────────────────────────────────────────────────────────────
+// ─── TOP BAR ─────────────────────────────────────────────────────────────────
 
-class _TopBar extends StatelessWidget {
-  const _TopBar();
+class _TopBar extends StatefulWidget {
+  final Uint8List? profileImageBytes;
+  final ValueChanged<Uint8List> onProfileImageChanged;
+  final VoidCallback onLogout;
+  final VoidCallback onGoToProfile;
+
+  const _TopBar({
+    required this.profileImageBytes,
+    required this.onProfileImageChanged,
+    required this.onLogout,
+    required this.onGoToProfile,
+  });
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  final _searchController = TextEditingController();
+  List<_SearchResult> _searchResults = [];
+  bool _isSearching = false;
+  Timer? _debounce;
+
+  // Overlay for ADMIN badge hover menu
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _menuVisible = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    _removeOverlay();
+    super.dispose();
+  }
+
+  // ── Profile image picker ──────────────────────────────────────────────────
+  Future<void> _pickProfileImage() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result != null && result.files.first.bytes != null) {
+        widget.onProfileImageChanged(result.files.first.bytes!);
+      }
+    } catch (e) {
+      debugPrint('File pick error: $e');
+    }
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => _runSearch(query.trim()),
+    );
+  }
+
+  Future<void> _runSearch(String query) async {
+    setState(() => _isSearching = true);
+
+    final endpoints = {
+      'Doctor': '$_baseUrl/doctors/search?q=$query',
+      'Patient': '$_baseUrl/patients/search?q=$query',
+      'Nurse': '$_baseUrl/nurses/search?q=$query',
+      'Staff': '$_baseUrl/staff/search?q=$query',
+    };
+
+    final results = <_SearchResult>[];
+
+    await Future.wait(
+      endpoints.entries.map((entry) async {
+        try {
+          final response = await http
+              .get(Uri.parse(entry.value))
+              .timeout(const Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            final body = jsonDecode(response.body);
+            final List<dynamic> items = body is List
+                ? body
+                : (body['data'] as List? ?? []);
+            for (final item in items) {
+              results.add(
+                _SearchResult(
+                  name:
+                      item['fullName'] as String? ??
+                      item['name'] as String? ??
+                      'Unknown',
+                  category: entry.key,
+                  subtitle:
+                      item['email'] as String? ?? item['id'] as String? ?? '',
+                ),
+              );
+            }
+          }
+        } catch (_) {
+          // Silently skip failed endpoints
+        }
+      }),
+    );
+
+    if (mounted) {
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+    }
+  }
+
+  // ── ADMIN badge overlay menu ──────────────────────────────────────────────
+  void _showAdminMenu() {
+    if (_menuVisible) return;
+    _overlayEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        width: 150,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(-40, 38),
+          child: MouseRegion(
+            // Keep open while hovering the menu itself
+            onEnter: (_) {},
+            onExit: (_) =>
+                Future.delayed(const Duration(milliseconds: 150), () {
+                  if (mounted) _removeOverlay();
+                }),
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: kWhite,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── Profile ──────────────────────────────────────
+                    _OverlayMenuItem(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Profile',
+                      onTap: () {
+                        _removeOverlay();
+                        widget.onGoToProfile(); // → AdminProfilePage
+                      },
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    // ── Logout ───────────────────────────────────────
+                    _OverlayMenuItem(
+                      icon: Icons.logout_rounded,
+                      label: 'Logout',
+                      isDestructive: true,
+                      onTap: () {
+                        _removeOverlay();
+                        widget.onLogout(); // → AdminLoginPage
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _menuVisible = true);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) setState(() => _menuVisible = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -313,38 +604,130 @@ class _TopBar extends StatelessWidget {
           ),
           const Spacer(),
 
-          // Search bar
-          Container(
+          // ── Search ───────────────────────────────────────────────────
+          SizedBox(
             width: 260,
-            height: 40,
-            decoration: BoxDecoration(
-              border: Border.all(color: kTeal, width: 1.5),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: const [
-                SizedBox(width: 14),
-                Icon(Icons.search_rounded, color: kTextGrey, size: 18),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      hintStyle: TextStyle(color: kTextGrey, fontSize: 14),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: kTeal, width: 1.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: kTextGrey,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          decoration: const InputDecoration(
+                            hintText: 'Search',
+                            hintStyle: TextStyle(
+                              color: kTextGrey,
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                      _isSearching
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: kTeal,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.mic_rounded,
+                              color: kTextGrey,
+                              size: 18,
+                            ),
+                      const SizedBox(width: 14),
+                    ],
                   ),
                 ),
-                Icon(Icons.mic_rounded, color: kTextGrey, size: 18),
-                SizedBox(width: 14),
+
+                // Search results dropdown
+                if (_searchResults.isNotEmpty)
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 260),
+                    decoration: BoxDecoration(
+                      color: kWhite,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      itemCount: _searchResults.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade100),
+                      itemBuilder: (_, i) {
+                        final r = _searchResults[i];
+                        return ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: kTeal.withOpacity(0.12),
+                            child: Text(
+                              r.category[0],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: kTeal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            r.name,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: kTextDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${r.category} · ${r.subtitle}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: kTextGrey,
+                            ),
+                          ),
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() => _searchResults = []);
+                          },
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
           ),
           const SizedBox(width: 20),
 
-          // Notification bell
+          // ── Notification bell ─────────────────────────────────────────
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -355,8 +738,11 @@ class _TopBar extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: kTeal, width: 1.5),
                 ),
-                child: const Icon(Icons.notifications_rounded,
-                    color: kTeal, size: 20),
+                child: const Icon(
+                  Icons.notifications_rounded,
+                  color: kTeal,
+                  size: 20,
+                ),
               ),
               Positioned(
                 top: -4,
@@ -372,9 +758,10 @@ class _TopBar extends StatelessWidget {
                     child: Text(
                       '3',
                       style: TextStyle(
-                          color: kWhite,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold),
+                        color: kWhite,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -383,22 +770,44 @@ class _TopBar extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Admin avatar
+          // ── Avatar + name + ADMIN badge ───────────────────────────────
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: kTealAccent,
-                  shape: BoxShape.circle,
+              // Avatar — click to pick profile image
+              GestureDetector(
+                onTap: _pickProfileImage,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: kTealAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: kTeal, width: 1.5),
+                    ),
+                    child: ClipOval(
+                      child: widget.profileImageBytes != null
+                          ? Image.memory(
+                              widget.profileImageBytes!,
+                              fit: BoxFit.cover,
+                              width: 40,
+                              height: 40,
+                            )
+                          : const Icon(
+                              Icons.person_rounded,
+                              color: kWhite,
+                              size: 22,
+                            ),
+                    ),
+                  ),
                 ),
-                child: const Icon(Icons.person_rounded,
-                    color: kWhite, size: 22),
               ),
               const SizedBox(width: 10),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Admin_Name',
@@ -408,20 +817,50 @@ class _TopBar extends StatelessWidget {
                       color: kTextDark,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: kTealLight,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'ADMIN',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: kWhite,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+                  const SizedBox(height: 2),
+
+                  // ── ADMIN badge — hover shows Profile / Logout menu ──
+                  CompositedTransformTarget(
+                    link: _layerLink,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      onEnter: (_) => _showAdminMenu(),
+                      onExit: (_) =>
+                          Future.delayed(const Duration(milliseconds: 200), () {
+                            if (mounted) _removeOverlay();
+                          }),
+                      child: GestureDetector(
+                        onTap: _menuVisible ? _removeOverlay : _showAdminMenu,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kTealLight,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                'ADMIN',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: kWhite,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: kWhite,
+                                size: 12,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -435,7 +874,130 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ─── DOCTORS PILL ───────────────────────────────────────────────────────────
+// ─── OVERLAY MENU ITEM ────────────────────────────────────────────────────────
+
+class _OverlayMenuItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  const _OverlayMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  @override
+  State<_OverlayMenuItem> createState() => _OverlayMenuItemState();
+}
+
+class _OverlayMenuItemState extends State<_OverlayMenuItem> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.isDestructive ? Colors.red : kTeal;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: _hovering ? color.withOpacity(0.08) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(widget.icon, size: 15, color: color),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: widget.isDestructive ? Colors.red : kTextDark,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── LIVE DATE & TIME ────────────────────────────────────────────────────────
+
+class _LiveDateTime extends StatefulWidget {
+  const _LiveDateTime();
+
+  @override
+  State<_LiveDateTime> createState() => _LiveDateTimeState();
+}
+
+class _LiveDateTimeState extends State<_LiveDateTime> {
+  late Timer _timer;
+  late DateTime _now;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() => _now = DateTime.now()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _pad(int n) => n.toString().padLeft(2, '0');
+
+  String get _dateStr => '${_pad(_now.day)}/${_pad(_now.month)}/${_now.year}';
+
+  String get _timeStr {
+    final h = _now.hour % 12 == 0 ? 12 : _now.hour % 12;
+    final period = _now.hour >= 12 ? 'pm' : 'am';
+    return '$h:${_pad(_now.minute)}:${_pad(_now.second)}$period';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          _dateStr,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: kTeal,
+          ),
+        ),
+        Text(
+          _timeStr,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: kTextGrey,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── DOCTORS PILL ────────────────────────────────────────────────────────────
 
 class _DoctorsPill extends StatelessWidget {
   const _DoctorsPill();
@@ -452,7 +1014,7 @@ class _DoctorsPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: const [
           Text(
-            '20',
+            '10',
             style: TextStyle(
               color: kWhite,
               fontSize: 26,
@@ -476,45 +1038,17 @@ class _DoctorsPill extends StatelessWidget {
   }
 }
 
-// ─── DATE WIDGET ────────────────────────────────────────────────────────────
-
-class _DateWidget extends StatelessWidget {
-  const _DateWidget();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          '09/04/2026',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: kTeal,
-          ),
-        ),
-        Text(
-          '10:30am',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: kTextGrey,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── STATS ROW ──────────────────────────────────────────────────────────────
+// ─── STATS ROW ───────────────────────────────────────────────────────────────
 
 class _StatData {
   final IconData icon;
   final String value;
   final String label;
-  const _StatData(
-      {required this.icon, required this.value, required this.label});
+  const _StatData({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 }
 
 class _StatsRow extends StatelessWidget {
@@ -524,30 +1058,33 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     const stats = [
       _StatData(
-          icon: Icons.local_hospital_rounded,
-          value: '200+',
-          label: 'Medical\nStaff'),
+        icon: Icons.local_hospital_rounded,
+        value: '200+',
+        label: 'Medical\nStaff',
+      ),
       _StatData(
-          icon: Icons.people_alt_rounded,
-          value: '300+',
-          label: 'Total\nPatients'),
+        icon: Icons.people_alt_rounded,
+        value: '300+',
+        label: 'Total\nPatients',
+      ),
       _StatData(
-          icon: Icons.groups_rounded,
-          value: '5000+',
-          label: 'Over\nVisitors'),
+        icon: Icons.groups_rounded,
+        value: '5000+',
+        label: 'Over\nVisitors',
+      ),
       _StatData(
-          icon: Icons.work_rounded,
-          value: '100+',
-          label: 'Administration\nstaff'),
+        icon: Icons.work_rounded,
+        value: '100+',
+        label: 'Administration\nstaff',
+      ),
     ];
 
     return Row(
-      children: List.generate(stats.length, (index) {
+      children: List.generate(stats.length, (i) {
         return Expanded(
           child: Padding(
-            padding:
-                EdgeInsets.only(right: index < stats.length - 1 ? 16.0 : 0.0),
-            child: _StatCard(data: stats[index]),
+            padding: EdgeInsets.only(right: i < stats.length - 1 ? 16.0 : 0.0),
+            child: _StatCard(data: stats[i]),
           ),
         );
       }),
@@ -623,7 +1160,7 @@ class _StatCardState extends State<_StatCard> {
   }
 }
 
-// ─── PATIENT STATISTICS CARD ────────────────────────────────────────────────
+// ─── PATIENT STATISTICS CARD ─────────────────────────────────────────────────
 
 class _PatientStatsCard extends StatelessWidget {
   const _PatientStatsCard();
@@ -646,7 +1183,6 @@ class _PatientStatsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with legend
           Row(
             children: [
               const Text(
@@ -658,16 +1194,13 @@ class _PatientStatsCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _LegendDot(color: kTeal, label: 'Outpatients'),
+              _LegendDot(color: kTeal, label: 'Admitted Patients'),
               const SizedBox(width: 16),
-              _LegendDot(color: kTealAccent, label: 'Inpatients'),
+              _LegendDot(color: kTealAccent, label: 'Discharged Patients'),
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            height: 260,
-            child: _AreaChart(),
-          ),
+          SizedBox(height: 260, child: _AreaChart()),
         ],
       ),
     );
@@ -689,14 +1222,13 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: kTextGrey)),
+        Text(label, style: const TextStyle(fontSize: 12, color: kTextGrey)),
       ],
     );
   }
 }
 
-// ─── AREA CHART (Custom Painter) ─────────────────────────────────────────────
+// ─── AREA CHART ──────────────────────────────────────────────────────────────
 
 class _AreaChart extends StatelessWidget {
   final List<double> series1 = const [280, 300, 260, 130, 310, 370, 440];
@@ -708,7 +1240,7 @@ class _AreaChart extends StatelessWidget {
     'Thursday',
     'Friday',
     'Saturday',
-    'Sunday'
+    'Sunday',
   ];
 
   _AreaChart();
@@ -717,7 +1249,10 @@ class _AreaChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _AreaChartPainter(
-          series1: series1, series2: series2, days: days),
+        series1: series1,
+        series2: series2,
+        days: days,
+      ),
       child: Container(),
     );
   }
@@ -745,20 +1280,14 @@ class _AreaChartPainter extends CustomPainter {
     final chartW = size.width - _leftPad;
     final chartH = size.height - _bottomPad - _topPad;
 
-    // ── Grid + Y labels ──
     final gridPaint = Paint()
       ..color = Colors.grey.withOpacity(0.15)
       ..strokeWidth = 1;
-
-    const labelStyle = TextStyle(
-      color: kTextGrey,
-      fontSize: 11,
-    );
+    const labelStyle = TextStyle(color: kTextGrey, fontSize: 11);
 
     for (int i = 0; i <= _gridLines; i++) {
       final y = _topPad + chartH - (i / _gridLines) * chartH;
-      canvas.drawLine(
-          Offset(_leftPad, y), Offset(size.width, y), gridPaint);
+      canvas.drawLine(Offset(_leftPad, y), Offset(size.width, y), gridPaint);
       final val = ((i / _gridLines) * _maxVal).round();
       final tp = TextPainter(
         text: TextSpan(text: '$val', style: labelStyle),
@@ -767,46 +1296,54 @@ class _AreaChartPainter extends CustomPainter {
       tp.paint(canvas, Offset(0, y - tp.height / 2));
     }
 
-    // ── Point helper ──
     Offset pt(int index, double val) {
       final x = _leftPad + (index / (days.length - 1)) * chartW;
       final y = _topPad + chartH - (val / _maxVal) * chartH;
       return Offset(x, y);
     }
 
-    // ── Areas ──
-    _drawArea(canvas, series2, pt, chartH, size,
-        const Color(0xFF4FC3B0).withOpacity(0.22),
-        const Color(0xFF4FC3B0).withOpacity(0.0));
-
-    _drawArea(canvas, series1, pt, chartH, size,
-        kTeal.withOpacity(0.50), kTeal.withOpacity(0.04));
-
-    // ── Lines ──
+    _drawArea(
+      canvas,
+      series2,
+      pt,
+      chartH,
+      size,
+      const Color(0xFF4FC3B0).withOpacity(0.22),
+      const Color(0xFF4FC3B0).withOpacity(0.0),
+    );
+    _drawArea(
+      canvas,
+      series1,
+      pt,
+      chartH,
+      size,
+      kTeal.withOpacity(0.50),
+      kTeal.withOpacity(0.04),
+    );
     _drawLine(canvas, series2, pt, kTealAccent, 2.0);
     _drawLine(canvas, series1, pt, kTeal, 2.5);
 
-    // ── Dots (series1) ──
-    final dotFill = Paint()..color = kTeal..style = PaintingStyle.fill;
-    final dotBorder = Paint()..color = kWhite..style = PaintingStyle.fill;
+    final dotFill = Paint()
+      ..color = kTeal
+      ..style = PaintingStyle.fill;
+    final dotBorder = Paint()
+      ..color = kWhite
+      ..style = PaintingStyle.fill;
     for (int i = 0; i < series1.length; i++) {
       final p = pt(i, series1[i]);
       canvas.drawCircle(p, 5.5, dotBorder);
       canvas.drawCircle(p, 3.5, dotFill);
     }
 
-    // ── X axis labels ──
     for (int i = 0; i < days.length; i++) {
       final tp = TextPainter(
         text: TextSpan(text: days[i], style: labelStyle),
         textDirection: TextDirection.ltr,
       )..layout();
       final x = _leftPad + (i / (days.length - 1)) * chartW;
-      tp.paint(canvas,
-          Offset(x - tp.width / 2, size.height - _bottomPad + 10));
+      tp.paint(canvas, Offset(x - tp.width / 2, size.height - _bottomPad + 10));
     }
 
-    // ── Baseline ──
     canvas.drawLine(
       Offset(_leftPad, _topPad + chartH),
       Offset(size.width, _topPad + chartH),
@@ -826,7 +1363,6 @@ class _AreaChartPainter extends CustomPainter {
     final path = Path()
       ..moveTo(pt(0, data[0]).dx, _topPad + chartH)
       ..lineTo(pt(0, data[0]).dx, pt(0, data[0]).dy);
-
     for (int i = 1; i < data.length; i++) {
       final prev = pt(i - 1, data[i - 1]);
       final curr = pt(i, data[i]);
@@ -836,17 +1372,21 @@ class _AreaChartPainter extends CustomPainter {
     path
       ..lineTo(pt(data.length - 1, data.last).dx, _topPad + chartH)
       ..close();
-
     final rect = Rect.fromLTWH(
-        _leftPad, _topPad, size.width - _leftPad, chartH);
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [topColor, bottomColor],
-      ).createShader(rect);
-
-    canvas.drawPath(path, paint);
+      _leftPad,
+      _topPad,
+      size.width - _leftPad,
+      chartH,
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [topColor, bottomColor],
+        ).createShader(rect),
+    );
   }
 
   void _drawLine(
@@ -862,10 +1402,7 @@ class _AreaChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-
-    final path = Path()
-      ..moveTo(pt(0, data[0]).dx, pt(0, data[0]).dy);
-
+    final path = Path()..moveTo(pt(0, data[0]).dx, pt(0, data[0]).dy);
     for (int i = 1; i < data.length; i++) {
       final prev = pt(i - 1, data[i - 1]);
       final curr = pt(i, data[i]);
@@ -879,7 +1416,7 @@ class _AreaChartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ─── FOOTER ─────────────────────────────────────────────────────────────────
+// ─── FOOTER ──────────────────────────────────────────────────────────────────
 
 class _Footer extends StatelessWidget {
   const _Footer();

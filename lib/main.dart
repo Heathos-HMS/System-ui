@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:adaptive_screen_utils/adaptive_screen_utils.dart';
-import 'package:heathos_hms/admin_dashboard_1.dart';
+//import 'package:heathos_hms/admin_dashboard_1.dart.txt';
 //import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:http/http.dart' as http;
 import 'admin_login_page.dart';
 import 'admin_dashboard.dart';
-import 'staff_login_page.dart';
-import 'staff_ui_page.dart';
-import 'patient_registration_page.dart';
-import 'profile_screen.dart';
-import 'appointment_screen.dart';
-import 'patient_screen.dart';
-import 'doctor_screen.dart';
-import 'nurse_screen.dart';
-import 'lab_technicianscreen.dart';
-import 'pharmacy_screen.dart';
-import 'adminstaff_screen.dart';
+//import 'staff_login_page.dart';
+import 'staff_dashboard.dart';
+import 'patient_dashboard.dart';
+import 'admin_profile.dart';
+//import 'appointment_screen.dart';
+import 'doctor_dashboard.dart';
+import 'nurse_list.dart';
+//import 'adminstaff_screen.dart';
+
 //import 'billing_agent_screen.dart';
 import 'overview_screen.dart';
-import 'doctor_login_page.dart';
+//import 'doctor_login_page.dart';
+import 'admin_signup_page.dart';
+import 'doctor_list.dart';
+import 'edit_patient_records.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,14 +52,17 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: StaffLoginPage(),
+      home: AdminSignUpPage(),
       debugShowCheckedModeBanner: false,
 
-      // ── Named routes (for Logout navigation) ──
-      // routes: {
-      //   '/login': (context) => const AdminLoginPage(),
-      //   '/dashboard': (context) => const AdminDashboard(),
-      // },
+      // ── Named routes (for Logout navigation) ── 
+      routes: {
+        '/adminSignup': (context) => const AdminSignUpPage(),
+        '/adminLogin': (context) => const AdminLoginPage(),
+        '/adminDashboard': (context) => const AdminDashboard(),
+        //'/doctorDashboard': (context) => const DoctorDashboard(),
+        //'/staffDashboard': (context) => StaffDashboard(),
+      },
     );
   }
 }

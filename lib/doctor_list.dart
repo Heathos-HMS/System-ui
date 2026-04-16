@@ -1,148 +1,5 @@
-// import 'package:flutter/material.dart';
-
-// class DoctorListPage extends StatefulWidget {
-//   @override
-//   _DoctorListPageState createState() => _DoctorListPageState();
-// }
-
-// class _DoctorListPageState extends State<DoctorListPage> {
-//   List<Map<String, dynamic>> doctors = [
-//     {"name": "Dr. Daniel Osei", "specialty": "Dentist", "image": "doctor1.jpg"},
-//     {"name": "Dr. Jackline Sam", "specialty": "Dentist", "image": "doctor2.jpg"},
-//     {"name": "Dr. Grace Dankwa", "specialty": "Dentist", "image": "doctor3.jpg"},
-//     {"name": "Dr. Joseph Kwofie", "specialty": "Dentist", "image": "doctor4.jpg"},
-//     {"name": "Dr. Patricia Quaye", "specialty": "Orthodontist", "image": "doctor5.jpg"},
-//     {"name": "Dr. Lord Glassmen", "specialty": "Dentist", "image": "doctor6.jpg"},
-//   ];
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Row(
-//         children: [
-//           // Sidebar
-//           Container(
-//             width: 80,
-//             color: Color(0xFF009688),
-//             child: Column(
-//               children: [
-//                 SizedBox(height: 50),
-//                 Icon(Icons.dashboard, color: Colors.white),
-//                 SizedBox(height: 5),
-//                 Text("Overview", style: TextStyle(color: Colors.white, fontSize: 10)),
-//                 SizedBox(height: 30),
-//                 Icon(Icons.person, color: Colors.white),
-//                 SizedBox(height: 5),
-//                 Text("Patient", style: TextStyle(color: Colors.white, fontSize: 10)),
-//                 SizedBox(height: 30),
-//                 Icon(Icons.local_hospital, color: Colors.white, size: 30),
-//                 SizedBox(height: 5),
-//                 Text("Doctor", style: TextStyle(color: Colors.white, fontSize: 10)),
-//                 Spacer(),
-//                 Icon(Icons.logout, color: Colors.white),
-//                 SizedBox(height: 5),
-//                 Text("Logout", style: TextStyle(color: Colors.white, fontSize: 10)),
-//                 SizedBox(height: 50),
-//               ],
-//             ),
-//           ),
-//           // Main content
-//           Expanded(
-//             child: Padding(
-//               padding: const EdgeInsets.all(20.0),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     "List of Doctors",
-//                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//                   ),
-//                   SizedBox(height: 10),
-//                   Text("View and manage doctors and their availability."),
-//                   SizedBox(height: 20),
-//                   // Search bar
-//                   TextField(
-//                     decoration: InputDecoration(
-//                       hintText: "Search...",
-//                       prefixIcon: Icon(Icons.search),
-//                       suffixIcon: Icon(Icons.notifications),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(10),
-//                       ),
-//                     ),
-//                   ),
-//                   SizedBox(height: 20),
-//                   // Doctor grid
-//                   Expanded(
-//                     child: GridView.builder(
-//                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-//                         crossAxisCount: 3,
-//                         crossAxisSpacing: 20,
-//                         mainAxisSpacing: 20,
-//                       ),
-//                       itemCount: doctors.length,
-//                       itemBuilder: (context, index) {
-//                         return Card(
-//                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//                           elevation: 4,
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               // Placeholder for doctor image
-//                               Container(
-//                                 height: 100,
-//                                 color: Colors.grey[300],
-//                                 child: Icon(Icons.person, size: 50),
-//                               ),
-//                               Padding(
-//                                 padding: const EdgeInsets.all(8.0),
-//                                 child: Text(
-//                                   doctors[index]["name"],
-//                                   style: TextStyle(fontWeight: FontWeight.bold),
-//                                 ),
-//                               ),
-//                               Padding(
-//                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//                                 child: Text(doctors[index]["specialty"]),
-//                               ),
-//                               Spacer(),
-//                               Align(
-//                                 alignment: Alignment.center,
-//                                 child: ElevatedButton(
-//                                   style: ElevatedButton.styleFrom(
-//                                     backgroundColor: Color(0xFF009688),
-//                                   ),
-//                                   onPressed: () {},
-//                                   child: Text("View Details"),
-//                                 ),
-//                               ),
-//                               SizedBox(height: 10),
-//                             ],
-//                           ),
-//                         );
-//                       },
-//                     ),
-//                   ),
-//                   // Pagination
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       TextButton(onPressed: () {}, child: Text("Previous")),
-//                       Text("1"),
-//                       TextButton(onPressed: () {}, child: Text("Next")),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
+import 'view_doctor_details.dart';
 
 // ─── COLORS (match your dashboard) ─────────────────────────────
 const kTeal = Color(0xFF0D7B6B);
@@ -170,32 +27,32 @@ class DoctorListPage extends StatelessWidget {
       Doctor(
         name: "Dr. Daniel Osei",
         specialty: "General Practitioner",
-        image: "assets/images/doc1.jpg",
+        image: "assets/images/drjackline.png",
       ),
       Doctor(
         name: "Dr. Jackline Sam",
         specialty: "General Surgeon",
-        image: "assets/images/doc2.jpg",
+        image: "assets/images/drsam.png",
       ),
       Doctor(
         name: "Dr. Grace Dankwa",
         specialty: "Gynecologist",
-        image: "assets/images/doc3.jpg",
+        image: "assets/images/#004.png",
       ),
       Doctor(
         name: "Dr. Joseph Kwofie",
         specialty: "Pediatrician",
-        image: "assets/images/doc4.jpg",
+        image: "assets/images/#003.png",
       ),
       Doctor(
         name: "Dr. Patricia Quaye",
         specialty: "Ophthalmologist",
-        image: "assets/images/doc5.jpg",
+        image: "assets/images/#006.png",
       ),
       Doctor(
         name: "Dr. Lord Glassmen",
         specialty: "Radiologist",
-        image: "assets/images/doc6.jpg",
+        image: "assets/images/#009.png",
       ),
     ];
 
@@ -333,8 +190,10 @@ class _DoctorCard extends StatelessWidget {
           TextButton(
             onPressed: () {
               // TODO: Navigate to Doctor Details Page
-              // Navigator.push(context,
-              //   MaterialPageRoute(builder: (_) => DoctorDetailsPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ViewDoctorDetails()),
+              );
             },
             style: TextButton.styleFrom(
               backgroundColor: kWhite,

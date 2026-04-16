@@ -13,14 +13,18 @@ class _StaffDashboardState extends State<StaffDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       appBar: AppBar(title: Text('HEATHOS HMS')),
       body: GridView.count(
         crossAxisCount: 2,
         padding: EdgeInsets.all(20),
         children: [
           _buildCard(context, 'NEW PATIENT', Icons.add, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => PatientRegistrationPage()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PatientRegistrationPage(),
+              ),
+            );
           }),
           _buildCard(context, 'PATIENT FOLDER/RECORDS', Icons.folder, () {
             // Navigate to records page
@@ -36,21 +40,22 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, IconData icon, VoidCallback onTap) {
+  Widget _buildCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return Card(
       child: InkWell(
         onTap: onTap,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 40),
-              Text(title),
-            ],
+            children: [Icon(icon, size: 40), Text(title)],
           ),
         ),
       ),
     );
   }
 }
-

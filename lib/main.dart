@@ -12,7 +12,7 @@ import 'admin_profile.dart';
 //import 'appointment_screen.dart';
 import 'doctor_dashboard.dart';
 import 'nurse_list.dart';
-//import 'adminstaff_screen.dart';
+import 'view_doctor_details.dart';
 
 //import 'billing_agent_screen.dart';
 import 'overview_screen.dart';
@@ -31,7 +31,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -55,7 +54,7 @@ class MyApp extends StatelessWidget {
       home: AdminSignUpPage(),
       debugShowCheckedModeBanner: false,
 
-      // ── Named routes (for Logout navigation) ── 
+      // ── Named routes (for Logout navigation) ──
       routes: {
         '/adminSignup': (context) => const AdminSignUpPage(),
         '/adminLogin': (context) => const AdminLoginPage(),
@@ -66,4 +65,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

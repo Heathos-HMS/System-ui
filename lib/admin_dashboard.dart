@@ -8,9 +8,9 @@ import 'package:file_picker/file_picker.dart';
 // ── Page imports — add each file as you create it ────────────────────────────
 import 'admin_login_page.dart';
 import 'admin_profile.dart';
-import 'patient_dashboard.dart';   // uncomment when ready
-import 'doctor_list.dart';    // uncomment when ready
-import 'nurse_list.dart';     // uncomment when ready
+import 'patient_dashboard.dart'; // uncomment when ready
+import 'doctor_list.dart'; // uncomment when ready
+import 'nurse_list.dart'; // uncomment when ready
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-const String _baseUrl = 'https://heathos-api.onrender.com';
+const String _baseUrl = 'https://heathos-app-latest.onrender.com';
 
 // ─── NAV INDEX CONSTANTS — update these as you add more pages ────────────────
 const int _kNavOverview = 0;
@@ -93,21 +93,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
         break;
 
       case _kNavPatient:
-        Navigator.push(context, MaterialPageRoute(builder: (_) =>  PatientListPage()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PatientListPage()),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Patient page coming soon.')),
         );
         break;
 
       case _kNavDoctor:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const DoctorListPage()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DoctorListPage()),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Doctor page coming soon.')),
         );
         break;
 
       case _kNavNurse:
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const NurseList()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NurseList()),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nurse page coming soon.')),
         );
@@ -481,7 +490,7 @@ class _TopBarState extends State<_TopBar> {
         try {
           final response = await http
               .get(Uri.parse(entry.value))
-              .timeout(const Duration(seconds: 8));
+              .timeout(const Duration(seconds: 30));
           if (response.statusCode == 200) {
             final body = jsonDecode(response.body);
             final List<dynamic> items = body is List

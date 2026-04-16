@@ -4,7 +4,8 @@ class PatientRegistrationPage extends StatefulWidget {
   const PatientRegistrationPage({super.key});
 
   @override
-  State<PatientRegistrationPage> createState() => _PatientRegistrationPageState();
+  State<PatientRegistrationPage> createState() =>
+      _PatientRegistrationPageState();
 }
 
 class _PatientRegistrationPageState extends State<PatientRegistrationPage> {

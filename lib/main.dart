@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:adaptive_screen_utils/adaptive_screen_utils.dart';
+import 'package:heathos_hms/patient_reg.dart';
 //import 'package:heathos_hms/admin_dashboard_1.dart.txt';
 //import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:http/http.dart' as http;
 import 'admin_login_page.dart';
 import 'admin_dashboard.dart';
 //import 'staff_login_page.dart';
-import 'staff_dashboard.dart';
+import 'staff_page.dart';
 import 'patient_dashboard.dart';
 import 'admin_profile.dart';
-//import 'appointment_screen.dart';
+import 'available_doctors_page.dart';
 import 'doctor_dashboard.dart';
 import 'nurse_list.dart';
 import 'view_doctor_details.dart';
+import 'staff_page.dart';
+import 'billing_page.dart';
+import 'appointment_page.dart';
 
-//import 'billing_agent_screen.dart';
+import 'appointment_page.dart';
 import 'overview_screen.dart';
-//import 'doctor_login_page.dart';
 import 'admin_signup_page.dart';
 import 'doctor_list.dart';
 import 'edit_patient_records.dart';
+import 'inventory_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,19 +53,19 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: AdminSignUpPage(),
       debugShowCheckedModeBanner: false,
 
       // ── Named routes (for Logout navigation) ──
-      routes: {
-        '/adminSignup': (context) => const AdminSignUpPage(),
-        '/adminLogin': (context) => const AdminLoginPage(),
-        '/adminDashboard': (context) => const AdminDashboard(),
-        //'/doctorDashboard': (context) => const DoctorDashboard(),
-        //'/staffDashboard': (context) => StaffDashboard(),
-      },
+      // routes: {
+      //   '/adminSignup': (context) => const AdminSignUpPage(),
+      //   '/adminLogin': (context) => const AdminLoginPage(),
+      //   '/adminDashboard': (context) => const AdminDashboard(),
+      //   //'/doctorDashboard': (context) => const DoctorDashboard(),
+      //   //'/staffDashboard': (context) => StaffDashboard(),
+      // },
     );
   }
 }

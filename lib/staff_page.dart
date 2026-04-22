@@ -14,7 +14,8 @@ import 'appointment_page.dart';
 import 'staff_page.dart';
 import 'inventory_page.dart';
 import 'billing_page.dart';
-import 'doctor_dashboard.dart';
+// Import the other staff category pages
+import 'nurse_list.dart';
 import 'administrative_staffs_page.dart';
 import 'lab_technicians_page.dart';
 import 'pharmacists_page.dart';
@@ -64,14 +65,14 @@ class NavItem {
   const NavItem({required this.icon, required this.label, required this.index});
 }
 
-class Nurse {
+class Doctor {
   final String id;
   final String name;
   final String specialty;
   final String joinDate;
   final String? avatarUrl;
 
-  const Nurse({
+  const Doctor({
     required this.id,
     required this.name,
     required this.specialty,
@@ -80,196 +81,195 @@ class Nurse {
   });
 }
 
-// ─── NURSE LIST PAGE ────────────────────────────────────────────────────────
-class NurseList extends StatefulWidget {
-  const NurseList({super.key});
+// ─── STAFF PAGE ──────────────────────────────────────────────────
+class StaffPage extends StatefulWidget {
+  const StaffPage({super.key});
 
   @override
-  State<NurseList> createState() => _NurseListState();
+  State<StaffPage> createState() => _StaffPageState();
 }
 
-class _NurseListState extends State<NurseList> {
+class _StaffPageState extends State<StaffPage> {
   Uint8List? _profileImageBytes;
-  StaffCategory _selectedTab = StaffCategory.nurses; // Nurses tab is selected
+  StaffCategory _selectedTab = StaffCategory.doctors;
 
-  // Sidebar nav items - Staffs highlighted since we're in staff section
-  // final List<NavItem> _navItems = [
-  //   NavItem(
-  //     icon: Icons.dashboard_rounded,
-  //     label: 'Overview',
-  //     index: kNavOverview,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.personal_injury_rounded,
-  //     label: 'Patient',
-  //     index: kNavPatient,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.event_note_rounded,
-  //     label: 'Appointment',
-  //     index: kNavAppointment,
-  //   ),
-  //   NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
-  //   NavItem(
-  //     icon: Icons.inventory_2_rounded,
-  //     label: 'Inventory',
-  //     index: kNavInventory,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.receipt_long_rounded,
-  //     label: 'Billings',
-  //     index: kNavBillings,
-  //   ),
-  // ];
-
-  // Mock data matching your screenshot
-  final List<Nurse> _nurses = [
-    Nurse(
-      id: 'N#001',
-      name: 'Abena Asiedu',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=31',
+  //Sidebar items - Staffs is selected with white background
+  final List<NavItem> _navItems = [
+    NavItem(
+      icon: Icons.dashboard_rounded,
+      label: 'Overview',
+      index: kNavOverview,
     ),
-    Nurse(
-      id: 'N#002',
-      name: 'Akosua Frimpong',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
+    NavItem(
+      icon: Icons.personal_injury_rounded,
+      label: 'Patient',
+      index: kNavPatient,
     ),
-    Nurse(
-      id: 'N#003',
-      name: 'Efua Nyamekye',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=33',
+    NavItem(
+      icon: Icons.event_note_rounded,
+      label: 'Appointment',
+      index: kNavAppointment,
     ),
-    Nurse(
-      id: 'N#004',
-      name: 'Adwoa Bentsi',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=34',
+    NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
+    NavItem(
+      icon: Icons.inventory_2_rounded,
+      label: 'Inventory',
+      index: kNavInventory,
     ),
-    Nurse(
-      id: 'N#005',
-      name: 'Yaa Opong',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=35',
-    ),
-    Nurse(
-      id: 'N#006',
-      name: 'Afia Koranteng',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=36',
-    ),
-    Nurse(
-      id: 'N#007',
-      name: 'Ama Gyan',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=37',
-    ),
-    Nurse(
-      id: 'N#008',
-      name: 'Esi Koomson',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=38',
-    ),
-    Nurse(
-      id: 'N#009',
-      name: 'Dede Sefakor',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=39',
-    ),
-    Nurse(
-      id: 'N#0010',
-      name: 'Akua Mensima',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=40',
-    ),
-    Nurse(
-      id: 'N#0011',
-      name: 'Sena Ahiable',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=41',
-    ),
-    Nurse(
-      id: 'N#0012',
-      name: 'Aba Kyei',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=42',
-    ),
-    Nurse(
-      id: 'N#0013',
-      name: 'Zainab Yakubu',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=43',
-    ),
-    Nurse(
-      id: 'N#0014',
-      name: 'Fatima Sulemana',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=44',
+    NavItem(
+      icon: Icons.receipt_long_rounded,
+      label: 'Billings',
+      index: kNavBillings,
     ),
   ];
 
-  // Handle sidebar navigation
-  // void _onNavItemSelected(int index) {
-  //   if (index == kNavStaff) return; // Already in staff section
-  //   switch (index) {
-  //     case kNavOverview:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const AdminDashboard()),
-  //       );
-  //       break;
-  //     case kNavPatient:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const PatientListPage()),
-  //       );
-  //       break;
-  //     case kNavAppointment:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => AppointmentPage()),
-  //       );
-  //       break;
-  //     case kNavInventory:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => InventoryPage()),
-  //       );
-  //       break;
-  //     // case kNavBillings:
-  //     //   Navigator.pushReplacement(
-  //     //     context,
-  //     //     MaterialPageRoute(builder: (_) => const BillingPage()),
-  //     //   );
-  //     //   break;
-  //   }
-  // }
+  // Mock data matching your screenshot
+  final List<Doctor> _doctors = [
+    Doctor(
+      id: 'D#001',
+      name: 'Dr. Daniel Osei',
+      specialty: 'General Practitioner',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/drjackline.png',
+    ),
+    Doctor(
+      id: 'D#002',
+      name: 'Dr. Deborah Essel',
+      specialty: 'Radiologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#004.png',
+    ),
+    Doctor(
+      id: 'D#003',
+      name: 'Dr. Thomas Otoo',
+      specialty: 'Paediatrician',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#005.png',
+    ),
+    Doctor(
+      id: 'D#004',
+      name: 'Dr. Beatrice Antwi',
+      specialty: 'Gynaecologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#006.png',
+    ),
+    Doctor(
+      id: 'D#005',
+      name: 'Dr. Richard Aidoo',
+      specialty: 'Dermatologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#003.png',
+    ),
+    Doctor(
+      id: 'D#006',
+      name: 'Dr. Helen Frempong',
+      specialty: 'Paediatrician',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#0010.png',
+    ),
+    Doctor(
+      id: 'D#007',
+      name: 'Dr. George Abbey',
+      specialty: 'Cardiologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#009.png',
+    ),
+    Doctor(
+      id: 'D#008',
+      name: 'Dr. Vivian Lartey',
+      specialty: 'Dermatologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#008.png',
+    ),
+    Doctor(
+      id: 'D#009',
+      name: 'Dr. Isaac Quaye',
+      specialty: 'Orthopaedic Surgeon',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/#008.png',
+    ),
+    Doctor(
+      id: 'D#0010',
+      name: 'Dr. Jackline Sam',
+      specialty: 'Endocrinologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/drsam.png',
+    ),
+    Doctor(
+      id: 'D#0011',
+      name: 'Dr. Grace Dankwa',
+      specialty: 'Urologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/Rectangle 1-2.png',
+    ),
+    Doctor(
+      id: 'D#0012',
+      name: 'Dr.Joseph Kwofie',
+      specialty: 'Oncologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/Rectangle 1-3.png',
+    ),
+    Doctor(
+      id: 'D#0013',
+      name: 'Dr. Patricia Quaye',
+      specialty: 'Gastroenterologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/Rectangle 1-4.png',
+    ),
+    Doctor(
+      id: 'D#0014',
+      name: 'Dr. Lord Glasmen',
+      specialty: 'Neurologist',
+      joinDate: '04/03/2026',
+      avatarUrl: 'assets/images/Rectangle 1-5.png',
+    ),
+  ];
 
-  // Handle staff category tab clicks - navigates to respective pages
-  void _onStaffTabSelected(StaffCategory category) {
-    if (category == StaffCategory.nurses) return; // Already here
-    setState(() => _selectedTab = category);
-    switch (category) {
-      case StaffCategory.doctors:
+  void _onNavItemSelected(int index) {
+    if (index == kNavStaff) return; // Already here
+    switch (index) {
+      case kNavOverview:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const StaffPage()),
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+        break;
+      case kNavPatient:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PatientListPage()),
+        );
+        break;
+      case kNavAppointment:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AppointmentPage()),
+        );
+        break;
+      case kNavInventory:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => InventoryPage()),
+        );
+        break;
+      // case kNavBillings:
+      //   Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(builder: (_) => const BillingPage()),
+      //   );
+      //   break;
+    }
+  }
+
+  // Handle tab switching - navigates to respective pages
+  void _onStaffTabSelected(StaffCategory category) {
+    if (category == StaffCategory.doctors) return; // Already here
+    setState(() => _selectedTab = category);
+    switch (category) {
+      case StaffCategory.nurses:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const NurseList()),
         );
         break;
       case StaffCategory.adminStaffs:
@@ -290,7 +290,7 @@ class _NurseListState extends State<NurseList> {
           MaterialPageRoute(builder: (_) => const PharmacistsPage()),
         );
         break;
-      case StaffCategory.nurses:
+      case StaffCategory.doctors:
         break;
     }
   }
@@ -309,8 +309,8 @@ class _NurseListState extends State<NurseList> {
     setState(() => _profileImageBytes = bytes);
   }
 
-  void _addNurse() {
-    // TODO: implement add nurse dialog/page
+  void _addDoctor() {
+    // TODO: implement add doctor
   }
 
   @override
@@ -319,12 +319,12 @@ class _NurseListState extends State<NurseList> {
       backgroundColor: kBackground,
       body: Row(
         children: [
-          // Sidebar(
-          //   navItems: _navItems,
-          //   selectedIndex: kNavStaff, // Staffs highlighted in sidebar
-          //   onItemSelected: _onNavItemSelected,
-          //   onLogout: _logout,
-          // ),
+          Sidebar(
+            navItems: _navItems,
+            selectedIndex: kNavStaff, // Staffs is selected
+            onItemSelected: _onNavItemSelected,
+            onLogout: _logout,
+          ),
           Expanded(
             child: Column(
               children: [
@@ -337,11 +337,11 @@ class _NurseListState extends State<NurseList> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-                    child: _NurseContent(
-                      nurses: _nurses,
+                    child: _DoctorContent(
+                      doctors: _doctors,
                       selectedTab: _selectedTab,
                       onTabSelected: _onStaffTabSelected,
-                      onAddNurse: _addNurse,
+                      onAddDoctor: _addDoctor,
                     ),
                   ),
                 ),
@@ -355,18 +355,18 @@ class _NurseListState extends State<NurseList> {
   }
 }
 
-// ─── NURSE CONTENT ──────────────────────────────────────────────────────────
-class _NurseContent extends StatelessWidget {
-  final List<Nurse> nurses;
+// ─── DOCTOR CONTENT ─────────────────────────────────────────────────────────
+class _DoctorContent extends StatelessWidget {
+  final List<Doctor> doctors;
   final StaffCategory selectedTab;
   final ValueChanged<StaffCategory> onTabSelected;
-  final VoidCallback onAddNurse;
+  final VoidCallback onAddDoctor;
 
-  const _NurseContent({
-    required this.nurses,
+  const _DoctorContent({
+    required this.doctors,
     required this.selectedTab,
     required this.onTabSelected,
-    required this.onAddNurse,
+    required this.onAddDoctor,
   });
 
   @override
@@ -374,7 +374,7 @@ class _NurseContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header: Title + Add Nurse button
+        // Header with title and Add Doctor button
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -383,7 +383,7 @@ class _NurseContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'List of Nurses',
+                    'List of Doctors',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -392,7 +392,7 @@ class _NurseContent extends StatelessWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'View and Manage Nurses.',
+                    'View and Manage doctors.',
                     style: TextStyle(
                       fontSize: 13,
                       color: kTextGrey,
@@ -403,23 +403,23 @@ class _NurseContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            _AddNurseButton(onTap: onAddNurse),
+            _AddDoctorButton(onTap: onAddDoctor),
           ],
         ),
         const SizedBox(height: 20),
-        // Staff category tabs: Doctors, Nurses, Admin, Lab Techs, Pharmacists
+        // Staff category tabs
         _StaffTabs(selectedTab: selectedTab, onTabSelected: onTabSelected),
         const SizedBox(height: 0), // No gap between tabs and table
-        // Nurses data table
-        _NursesTable(nurses: nurses),
+        // Doctors table
+        _DoctorsTable(doctors: doctors),
       ],
     );
   }
 }
 
-class _AddNurseButton extends StatelessWidget {
+class _AddDoctorButton extends StatelessWidget {
   final VoidCallback onTap;
-  const _AddNurseButton({required this.onTap});
+  const _AddDoctorButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +438,7 @@ class _AddNurseButton extends StatelessWidget {
             Icon(Icons.add_rounded, color: kWhite, size: 18),
             SizedBox(width: 8),
             Text(
-              'Add Nurse',
+              'Add Doctor',
               style: TextStyle(
                 color: kWhite,
                 fontSize: 14,
@@ -452,7 +452,7 @@ class _AddNurseButton extends StatelessWidget {
   }
 }
 
-// Staff category tabs - clickable to switch between staff types
+// Staff category tabs - Doctors, Nurses, Admin Staffs, Lab Techs, Pharmacists
 class _StaffTabs extends StatelessWidget {
   final StaffCategory selectedTab;
   final ValueChanged<StaffCategory> onTabSelected;
@@ -557,9 +557,9 @@ class _TabItem extends StatelessWidget {
   }
 }
 
-class _NursesTable extends StatelessWidget {
-  final List<Nurse> nurses;
-  const _NursesTable({required this.nurses});
+class _DoctorsTable extends StatelessWidget {
+  final List<Doctor> doctors;
+  const _DoctorsTable({required this.doctors});
 
   @override
   Widget build(BuildContext context) {
@@ -640,15 +640,15 @@ class _NursesTable extends StatelessWidget {
               ],
             ),
           ),
-          // Table rows with alternating colors
-          ...nurses.asMap().entries.map((entry) {
+          // Table rows
+          ...doctors.asMap().entries.map((entry) {
             final index = entry.key;
-            final nurse = entry.value;
+            final doctor = entry.value;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
                 color: index % 2 == 0 ? kWhite : const Color(0xFFF8FCFB),
-                border: index < nurses.length - 1
+                border: index < doctors.length - 1
                     ? Border(bottom: BorderSide(color: Colors.grey.shade200))
                     : null,
               ),
@@ -657,7 +657,7 @@ class _NursesTable extends StatelessWidget {
                   SizedBox(
                     width: 80,
                     child: Text(
-                      nurse.id,
+                      doctor.id,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
@@ -674,10 +674,10 @@ class _NursesTable extends StatelessWidget {
                           ),
                           clipBehavior: Clip.antiAlias,
                           child:
-                              nurse.avatarUrl != null &&
-                                  nurse.avatarUrl!.isNotEmpty
+                              doctor.avatarUrl != null &&
+                                  doctor.avatarUrl!.isNotEmpty
                               ? Image.network(
-                                  nurse.avatarUrl!,
+                                  doctor.avatarUrl!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const Icon(
                                     Icons.person,
@@ -693,7 +693,7 @@ class _NursesTable extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          nurse.name,
+                          doctor.name,
                           style: const TextStyle(
                             fontSize: 13,
                             color: kTextDark,
@@ -706,14 +706,14 @@ class _NursesTable extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: Text(
-                      nurse.specialty,
+                      doctor.specialty,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Text(
-                      nurse.joinDate,
+                      doctor.joinDate,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
@@ -721,7 +721,7 @@ class _NursesTable extends StatelessWidget {
                     flex: 2,
                     child: InkWell(
                       onTap: () {
-                        // TODO: Navigate to nurse details
+                        // TODO: Navigate to doctor details
                       },
                       child: Row(
                         children: const [
@@ -933,7 +933,7 @@ class _SidebarItemState extends State<SidebarItem> {
   }
 }
 
-// TopBar and Footer are identical to other pages
+// TopBar and Footer are identical to other pages - reuse from patient_list_page.dart
 class TopBar extends StatefulWidget {
   final Uint8List? profileImageBytes;
   final ValueChanged<Uint8List> onProfileImageChanged;
@@ -1013,7 +1013,7 @@ class _TopBarState extends State<TopBar> {
     };
 
     final results = <SearchResult>[];
-    final errors = <String>[];
+    final errors = <String>[]; // Track failed endpoints
 
     await Future.wait(
       endpoints.entries.map((entry) async {
@@ -1041,6 +1041,7 @@ class _TopBarState extends State<TopBar> {
               );
             }
           } else {
+            // Non-200 response
             errors.add('${entry.key}: HTTP ${response.statusCode}');
             debugPrint(
               'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
@@ -1065,6 +1066,7 @@ class _TopBarState extends State<TopBar> {
         _isSearching = false;
       });
 
+      // Show error snackbar if any endpoint failed
       if (errors.isNotEmpty && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -2,17 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'constants/api_constants.dart';
+import 'admin_login_page.dart';
 import 'admin_dashboard.dart';
 import 'doctor_dashboard.dart';
-import 'staff_dashboard.dart';
-import 'admin_login_page.dart';
+import 'patient_dashboard.dart';
+import 'lab_technicians_page.dart';
+import 'billing_staff_dashboard.dart';
 
-// ── Base URL ─────────────────────────────────────────────────────────────────
-// Flutter Web runs in the browser — localhost refers to your own machine.
-// Make sure your Spring Boot backend has CORS enabled for http://localhost
-const String _baseUrl = 'https://heathos-api.onrender.com';
-
-//'http://localhost:8080/api';
+// ── Base URL ─────────────────────────heathos─────────────────────────────────────────
+const String _signupBaseUrl = kApiBaseUrlWithApi;
 
 // ── Colour tokens ─────────────────────────────────────────────────────────────
 const _cTeal = Color.fromARGB(255, 1, 211, 193);
@@ -21,6 +20,48 @@ const _cBg = Color(0xFFF5FAFA);
 const _cBorder = Color(0xFFCCE8E5);
 const _cText = Color(0xFF0D2B27);
 const _cSubtext = Color(0xFF607C79);
+
+// ── Role options ──────────────────────────────────────────────────────────────
+const List<_RoleOption> _signupRoles = [
+  _RoleOption(
+    label: 'Admin',
+    apiValue: 'ADMIN',
+    icon: Icons.admin_panel_settings_rounded,
+  ),
+  _RoleOption(
+    label: 'Doctor',
+    apiValue: 'DOCTOR',
+    icon: Icons.medical_services_rounded,
+  ),
+  _RoleOption(
+    label: 'Receptionist',
+    apiValue: 'RECEPTIONIST',
+    icon: Icons.desktop_mac_rounded,
+  ),
+  _RoleOption(
+    label: 'Lab Technician',
+    apiValue: 'LAB_TECHNICIAN',
+    icon: Icons.science_rounded,
+  ),
+  _RoleOption(
+    label: 'Billing Staff',
+    apiValue: 'BILLING_OFFICER',
+    icon: Icons.receipt_long_rounded,
+  ),
+];
+
+class _RoleOption {
+  final String label;
+  final String apiValue;
+  final IconData icon;
+  const _RoleOption({
+    required this.label,
+    required this.apiValue,
+    required this.icon,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class AdminSignUpPage extends StatefulWidget {
   const AdminSignUpPage({super.key});
@@ -32,11 +73,11 @@ class AdminSignUpPage extends StatefulWidget {
 class _AdminSignUpPageState extends State<AdminSignUpPage> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // ── State ─────────────────────────────────────────────────────────────────
-  String? _selectedRole;
+  _RoleOption? _selectedRole;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isLoading = false;
@@ -46,27 +87,16 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  // ── Map display label → API role value
-  String _toApiRole(String label) {
-    switch (label) {
-      case 'Doctor':
-        return 'DOCTOR';
-      case 'Staff':
-        return 'STAFF';
-      case 'Admin':
-      default:
-        return 'ADMIN';
-    }
-  }
-
-  // ── API call
+  // ── API — REGISTER ───────────────────────────────────────────────────────
   Future<void> _handleSignUp() async {
-    // Client-side validation
+    setState(() => _errorMessage = null);
+
     if (_selectedRole == null) {
       setState(() => _errorMessage = 'Please select a user type.');
       return;
@@ -76,11 +106,11 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
       return;
     }
     if (_emailController.text.trim().isEmpty) {
-      setState(() => _errorMessage = 'Please enter your institutional email.');
+      setState(() => _errorMessage = 'Please enter your email.');
       return;
     }
-    if (_passwordController.text.isEmpty) {
-      setState(() => _errorMessage = 'Please create a password.');
+    if (_phoneController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter your phone number.');
       return;
     }
     if (_passwordController.text.length < 8) {
@@ -92,82 +122,70 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final uri = Uri.parse('$_baseUrl/api/auth/register');
-      debugPrint('[SignUp] POST → $uri');
-
       final response = await http
           .post(
-            uri,
+            Uri.parse('$_signupBaseUrl/auth/register'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'fullName': _fullNameController.text.trim(),
               'email': _emailController.text.trim(),
               'password': _passwordController.text,
-              'role': _toApiRole(_selectedRole!),
+              'role': _selectedRole!.apiValue,
+              'phone': _phoneController.text.trim(),
             }),
           )
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw Exception(
-              'Request timed out. Make sure the backend is running on port 8080.',
-            ),
-          );
+          .timeout(const Duration(seconds: 20));
 
-      debugPrint('[SignUp] Status: ${response.statusCode}');
-      debugPrint('[SignUp] Body: ${response.body}');
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (!mounted) return;
-        _navigateToDashboard(_selectedRole!);
+        _navigateToDashboard(_selectedRole!.apiValue);
       } else {
-        setState(
-          () => _errorMessage =
-              body['message'] as String? ?? 'Sign up failed. Please try again.',
-        );
+        setState(() {
+          _errorMessage =
+              body['message'] ?? 'Sign up failed. Email may already exist.';
+        });
       }
     } catch (e) {
-      debugPrint('[SignUp] Error: $e');
       final msg = e.toString();
-      if (msg.contains('XMLHttpRequest') ||
-          msg.contains('Failed host lookup')) {
-        setState(
-          () => _errorMessage =
-              'Could not reach the server. CORS may not be enabled.',
-        );
-      } else if (msg.contains('timed out')) {
-        setState(
-          () => _errorMessage =
-              'Request timed out. Make sure the backend is running.',
-        );
+      if (msg.contains('XMLHttpRequest') || msg.contains('SocketException')) {
+        _errorMessage = 'Cannot reach server. Check network or CORS.';
+      } else if (msg.contains('TimeoutException')) {
+        _errorMessage = 'Request timed out. Try again.';
       } else {
-        setState(() => _errorMessage = msg.replaceFirst('Exception: ', ''));
+        _errorMessage = msg.replaceFirst('Exception: ', '');
       }
+      setState(() {});
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ── Role-based navigation ─────────────────────────────────────────────────
+  // ── Navigation ───────────────────────────────────────────────────────────
   void _navigateToDashboard(String role) {
     Widget destination;
     switch (role) {
-      case 'Doctor':
-        destination = const DoctorDashboard();
+      case 'DOCTOR':
+        destination = const AdminDashboard();
         break;
-      case 'Staff':
-        destination = const StaffDashboard();
+      case 'RECEPTIONIST':
+        destination = const PatientListPage();
         break;
+      case 'LAB_TECHNICIAN':
+        destination = const LabTechniciansPage();
+        break;
+      case 'BILLING_OFFICER':
+        destination = const BillingStaffDashboard();
+        break;
+      case 'ADMIN':
       default:
         destination = const AdminDashboard();
     }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => destination),
@@ -179,7 +197,6 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
     MaterialPageRoute(builder: (_) => const AdminLoginPage()),
   );
 
-  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -189,33 +206,27 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
       backgroundColor: _cBg,
       body: Row(
         children: [
-          // ── LEFT: form panel ───────────────────────────────────────────
           Expanded(
             flex: isWide ? 5 : 10,
             child: Center(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isWide ? 56 : 28,
-                  vertical: 40,
+                  horizontal: isWide ? 60 : 28,
+                  vertical: 48,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(maxWidth: 460),
                   child: _buildForm(),
                 ),
               ),
             ),
           ),
-
-          // ── RIGHT: image panel ─────────────────────────────────────────
           if (isWide)
             Expanded(
               flex: 5,
-              child: SizedBox(
-                height: size.height,
-                child: Image.asset(
-                  'assets/images/signpg_img.png',
-                  fit: BoxFit.cover,
-                ),
+              child: Image.asset(
+                'assets/images/signpg_img.png',
+                fit: BoxFit.cover,
               ),
             ),
         ],
@@ -227,29 +238,26 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Logo row ──────────────────────────────────────────────────────
         Row(
           children: [
-            Image.asset('assets/images/Logo.png', height: 36),
+            Image.asset('assets/images/Logo.png', height: 34),
             const SizedBox(width: 10),
             const Text(
               'Heathos',
               style: TextStyle(
-                fontSize: 40,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: _cTealDark,
-                letterSpacing: 0.3,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 36),
+        const SizedBox(height: 40),
 
-        // ── Heading ───────────────────────────────────────────────────────
         const Text(
-          'Sign Up',
+          'Welcome',
           style: TextStyle(
-            fontSize: 35,
+            fontSize: 48,
             fontWeight: FontWeight.w900,
             color: _cTeal,
             height: 1.1,
@@ -257,61 +265,89 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Create your Heathos HMS account below.',
-          style: TextStyle(fontSize: 13, color: _cSubtext, height: 1.5),
+          'Seamless hospital management for smarter,\nsafer and better healthcare.',
+          style: TextStyle(
+            fontSize: 13,
+            color: Color.fromARGB(255, 7, 13, 12),
+            height: 1.6,
+          ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
 
-        // ── User type dropdown ─────────────────────────────────────────────
+        const Text(
+          'Sign Up',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _cText,
+          ),
+        ),
+        const SizedBox(height: 20),
+
         _label('User Type'),
         const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
+        DropdownButtonFormField<_RoleOption>(
           value: _selectedRole,
-          decoration: _inputDeco('Select User Type'),
+          decoration: _inputDeco('Select user type'),
           style: const TextStyle(fontSize: 14, color: _cText),
-          dropdownColor: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          items: [
-            'Admin',
-            'Doctor',
-            'Staff',
-          ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-          onChanged: (v) => setState(() {
-            _selectedRole = v;
-            _errorMessage = null;
-          }),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _cSubtext),
+          items: _signupRoles
+              .map(
+                (r) => DropdownMenuItem(
+                  value: r,
+                  child: Row(
+                    children: [
+                      Icon(r.icon, size: 16, color: _cSubtext),
+                      const SizedBox(width: 8),
+                      Text(
+                        r.label,
+                        style: const TextStyle(fontSize: 14, color: _cText),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (v) => setState(() => _selectedRole = v),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // ── Full Name ──────────────────────────────────────────────────────
         _label('Full Name'),
         const SizedBox(height: 6),
         TextField(
           controller: _fullNameController,
           style: const TextStyle(fontSize: 14, color: _cText),
-          decoration: _inputDeco('Please enter your full name'),
+          decoration: _inputDeco('Enter your full name'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // ── Institutional Email ────────────────────────────────────────────
-        _label('Institutional Email'),
+        _label('Email'),
         const SizedBox(height: 6),
         TextField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           style: const TextStyle(fontSize: 14, color: _cText),
-          decoration: _inputDeco('Enter your institutional email'),
+          decoration: _inputDeco('Enter your email'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // ── Create Password ────────────────────────────────────────────────
-        _label('Create Password'),
+        _label('Phone Number'),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          style: const TextStyle(fontSize: 14, color: _cText),
+          decoration: _inputDeco('Enter your phone number'),
+        ),
+        const SizedBox(height: 18),
+
+        _label('Password'),
         const SizedBox(height: 6),
         TextField(
           controller: _passwordController,
           obscureText: _obscurePassword,
           style: const TextStyle(fontSize: 14, color: _cText),
-          decoration: _inputDeco('Minimum 8 characters').copyWith(
+          decoration: _inputDeco('Create a password').copyWith(
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -323,9 +359,8 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // ── Confirm Password ───────────────────────────────────────────────
         _label('Confirm Password'),
         const SizedBox(height: 6),
         TextField(
@@ -344,9 +379,8 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
             ),
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
 
-        // ── Error message ──────────────────────────────────────────────────
         if (_errorMessage != null) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -375,7 +409,6 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
           const SizedBox(height: 16),
         ],
 
-        // ── Sign Up button ─────────────────────────────────────────────────
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -410,7 +443,6 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
         ),
         const SizedBox(height: 20),
 
-        // ── Already have account ───────────────────────────────────────────
         Center(
           child: GestureDetector(
             onTap: _goToLogin,
@@ -420,7 +452,7 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
                 children: [
                   TextSpan(text: 'Already have an account? '),
                   TextSpan(
-                    text: 'Sign In',
+                    text: 'Login',
                     style: TextStyle(
                       color: _cTeal,
                       fontWeight: FontWeight.w700,
@@ -437,7 +469,6 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   Widget _label(String text) => Text(
     text,
     style: const TextStyle(

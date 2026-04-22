@@ -1,0 +1,174 @@
+import 'package:flutter/material.dart';
+import '../models/models/nav_item.dart'; // FIXED PATH
+import '../models/constants/app_colors.dart';
+const kTeal = Color(0xFF0D7B6B);
+const kTealDark = Color(0xFF095F54);
+const kWhite = Color(0xFFFFFFFF);
+
+class Sidebar extends StatelessWidget {
+  final List<NavItem> navItems;
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+  final VoidCallback onLogout;
+
+  const Sidebar({
+    super.key,
+    required this.navItems,
+    required this.selectedIndex,
+    required this.onItemSelected,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      height: double.infinity,
+      color: kTeal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 38,
+                  height: 38,
+                  child: Image.asset(
+                    'assets/images/Group.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Heathos',
+                  style: TextStyle(
+                    color: kWhite,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: navItems.length,
+              itemBuilder: (_, i) => SidebarItem(
+                icon: navItems[i].icon,
+                label: navItems[i].label,
+                isSelected: selectedIndex == navItems[i].index,
+                onTap: () => onItemSelected(navItems[i].index),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+            child: InkWell(
+              onTap: onLogout,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: const [
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: kWhite,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, color: kWhite, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SidebarItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const SidebarItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<SidebarItem> createState() => _SidebarItemState();
+}
+
+class _SidebarItemState extends State<SidebarItem> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? kWhite.withOpacity(0.20)
+                  : _hovering
+                  ? kWhite.withOpacity(0.10)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: widget.isSelected
+                  ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Icon(widget.icon, color: kWhite, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: kWhite,
+                      fontSize: 14,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+

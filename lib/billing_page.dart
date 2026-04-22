@@ -13,11 +13,6 @@ import 'patient_dashboard.dart';
 import 'appointment_page.dart';
 import 'staff_page.dart';
 import 'inventory_page.dart';
-import 'billing_page.dart';
-import 'doctor_dashboard.dart';
-import 'administrative_staffs_page.dart';
-import 'lab_technicians_page.dart';
-import 'pharmacists_page.dart';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const kTeal = Color(0xFF0D7B6B);
@@ -28,9 +23,11 @@ const kBackground = Color(0xFFF0F4F4);
 const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
+const kCardGrey = Color(0xFFF5F5F7);
 const kTableHeader = Color(0xFFD0EFEC);
-const kTabSelected = Color(0xFF0D7B6B);
-const kTabUnselected = Color(0xFFFFFFFF);
+const kPaidBlue = Color(0xFF2E9CCA);
+const kPartialAmber = Color(0xFFC5A031);
+const kUnpaidRed = Color(0xFFD14343);
 
 const String _baseUrl = kApiBaseUrl;
 
@@ -41,9 +38,6 @@ const int kNavAppointment = 2;
 const int kNavStaff = 3;
 const int kNavInventory = 4;
 const int kNavBillings = 5;
-
-// ─── STAFF TAB CONSTANTS ────────────────────────────────────────────────────
-enum StaffCategory { doctors, nurses, adminStaffs, labTechs, pharmacists }
 
 // ─── MODELS ─────────────────────────────────────────────────────────────────
 class SearchResult {
@@ -64,35 +58,41 @@ class NavItem {
   const NavItem({required this.icon, required this.label, required this.index});
 }
 
-class Nurse {
-  final String id;
-  final String name;
-  final String specialty;
-  final String joinDate;
+class Bill {
+  final int id;
+  final String patientName;
   final String? avatarUrl;
+  final String phone;
+  final double totalAmount;
+  final double? amountPaid;
+  final double? balance;
+  final String date;
+  final String status; // Paid, Partially Paid, Unpaid
 
-  const Nurse({
+  const Bill({
     required this.id,
-    required this.name,
-    required this.specialty,
-    required this.joinDate,
+    required this.patientName,
     this.avatarUrl,
+    required this.phone,
+    required this.totalAmount,
+    this.amountPaid,
+    this.balance,
+    required this.date,
+    required this.status,
   });
 }
 
-// ─── NURSE LIST PAGE ────────────────────────────────────────────────────────
-class NurseList extends StatefulWidget {
-  const NurseList({super.key});
+// ─── BILLING PAGE ───────────────────────────────────────────────────────────
+class BillingPage extends StatefulWidget {
+  const BillingPage({super.key});
 
   @override
-  State<NurseList> createState() => _NurseListState();
+  State<BillingPage> createState() => _BillingPageState();
 }
 
-class _NurseListState extends State<NurseList> {
+class _BillingPageState extends State<BillingPage> {
   Uint8List? _profileImageBytes;
-  StaffCategory _selectedTab = StaffCategory.nurses; // Nurses tab is selected
 
-  // Sidebar nav items - Staffs highlighted since we're in staff section
   // final List<NavItem> _navItems = [
   //   NavItem(
   //     icon: Icons.dashboard_rounded,
@@ -122,111 +122,55 @@ class _NurseListState extends State<NurseList> {
   //   ),
   // ];
 
-  // Mock data matching your screenshot
-  final List<Nurse> _nurses = [
-    Nurse(
-      id: 'N#001',
-      name: 'Abena Asiedu',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=31',
+  final List<Bill> _bills = [
+    Bill(
+      id: 1,
+      patientName: 'Nana Ofori',
+      avatarUrl: 'https://i.pravatar.cc/150?img=1',
+      phone: '024 123 4567',
+      totalAmount: 500,
+      amountPaid: 500,
+      balance: null,
+      date: '02/04/2026',
+      status: 'Paid',
     ),
-    Nurse(
-      id: 'N#002',
-      name: 'Akosua Frimpong',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
+    Bill(
+      id: 2,
+      patientName: 'Adwoa Agyeman',
+      avatarUrl: 'https://i.pravatar.cc/150?img=2',
+      phone: '055 234 5678',
+      totalAmount: 500,
+      amountPaid: 300,
+      balance: 200,
+      date: '04/04/2026',
+      status: 'Partially Paid',
     ),
-    Nurse(
-      id: 'N#003',
-      name: 'Efua Nyamekye',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=33',
+    Bill(
+      id: 3,
+      patientName: 'Kwaku Boateng',
+      avatarUrl: 'https://i.pravatar.cc/150?img=3',
+      phone: '020 345 6789',
+      totalAmount: 500,
+      amountPaid: 400,
+      balance: 100,
+      date: '06/04/2026',
+      status: 'Partially Paid',
     ),
-    Nurse(
-      id: 'N#004',
-      name: 'Adwoa Bentsi',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=34',
-    ),
-    Nurse(
-      id: 'N#005',
-      name: 'Yaa Opong',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=35',
-    ),
-    Nurse(
-      id: 'N#006',
-      name: 'Afia Koranteng',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=36',
-    ),
-    Nurse(
-      id: 'N#007',
-      name: 'Ama Gyan',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=37',
-    ),
-    Nurse(
-      id: 'N#008',
-      name: 'Esi Koomson',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=38',
-    ),
-    Nurse(
-      id: 'N#009',
-      name: 'Dede Sefakor',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=39',
-    ),
-    Nurse(
-      id: 'N#0010',
-      name: 'Akua Mensima',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=40',
-    ),
-    Nurse(
-      id: 'N#0011',
-      name: 'Sena Ahiable',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=41',
-    ),
-    Nurse(
-      id: 'N#0012',
-      name: 'Aba Kyei',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=42',
-    ),
-    Nurse(
-      id: 'N#0013',
-      name: 'Zainab Yakubu',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=43',
-    ),
-    Nurse(
-      id: 'N#0014',
-      name: 'Fatima Sulemana',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=44',
+    Bill(
+      id: 4,
+      patientName: 'Efua Boateng',
+      avatarUrl: 'https://i.pravatar.cc/150?img=4',
+      phone: '027 456 7890',
+      totalAmount: 500,
+      amountPaid: null,
+      balance: 500,
+      date: '08/04/2026',
+      status: 'Unpaid',
     ),
   ];
 
-  // Handle sidebar navigation
   // void _onNavItemSelected(int index) {
-  //   if (index == kNavStaff) return; // Already in staff section
+  //   if (index == kNavBillings) return;
   //   switch (index) {
   //     case kNavOverview:
   //       Navigator.pushReplacement(
@@ -246,54 +190,20 @@ class _NurseListState extends State<NurseList> {
   //         MaterialPageRoute(builder: (_) => AppointmentPage()),
   //       );
   //       break;
+  //     case kNavStaff:
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (_) => const StaffPage()),
+  //       );
+  //       break;
   //     case kNavInventory:
   //       Navigator.pushReplacement(
   //         context,
   //         MaterialPageRoute(builder: (_) => InventoryPage()),
   //       );
   //       break;
-  //     // case kNavBillings:
-  //     //   Navigator.pushReplacement(
-  //     //     context,
-  //     //     MaterialPageRoute(builder: (_) => const BillingPage()),
-  //     //   );
-  //     //   break;
   //   }
   // }
-
-  // Handle staff category tab clicks - navigates to respective pages
-  void _onStaffTabSelected(StaffCategory category) {
-    if (category == StaffCategory.nurses) return; // Already here
-    setState(() => _selectedTab = category);
-    switch (category) {
-      case StaffCategory.doctors:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const StaffPage()),
-        );
-        break;
-      case StaffCategory.adminStaffs:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdministrativeStaffsPage()),
-        );
-        break;
-      case StaffCategory.labTechs:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LabTechniciansPage()),
-        );
-        break;
-      case StaffCategory.pharmacists:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const PharmacistsPage()),
-        );
-        break;
-      case StaffCategory.nurses:
-        break;
-    }
-  }
 
   void _logout() {
     Navigator.pushAndRemoveUntil(
@@ -309,8 +219,8 @@ class _NurseListState extends State<NurseList> {
     setState(() => _profileImageBytes = bytes);
   }
 
-  void _addNurse() {
-    // TODO: implement add nurse dialog/page
+  void _addPayment() {
+    // TODO: implement add payment
   }
 
   @override
@@ -321,7 +231,7 @@ class _NurseListState extends State<NurseList> {
         children: [
           // Sidebar(
           //   navItems: _navItems,
-          //   selectedIndex: kNavStaff, // Staffs highlighted in sidebar
+          //   selectedIndex: kNavBillings,
           //   onItemSelected: _onNavItemSelected,
           //   onLogout: _logout,
           // ),
@@ -337,11 +247,9 @@ class _NurseListState extends State<NurseList> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-                    child: _NurseContent(
-                      nurses: _nurses,
-                      selectedTab: _selectedTab,
-                      onTabSelected: _onStaffTabSelected,
-                      onAddNurse: _addNurse,
+                    child: _BillingContent(
+                      bills: _bills,
+                      onAddPayment: _addPayment,
                     ),
                   ),
                 ),
@@ -355,26 +263,18 @@ class _NurseListState extends State<NurseList> {
   }
 }
 
-// ─── NURSE CONTENT ──────────────────────────────────────────────────────────
-class _NurseContent extends StatelessWidget {
-  final List<Nurse> nurses;
-  final StaffCategory selectedTab;
-  final ValueChanged<StaffCategory> onTabSelected;
-  final VoidCallback onAddNurse;
+// ─── BILLING CONTENT ────────────────────────────────────────────────────────
+class _BillingContent extends StatelessWidget {
+  final List<Bill> bills;
+  final VoidCallback onAddPayment;
 
-  const _NurseContent({
-    required this.nurses,
-    required this.selectedTab,
-    required this.onTabSelected,
-    required this.onAddNurse,
-  });
+  const _BillingContent({required this.bills, required this.onAddPayment});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header: Title + Add Nurse button
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -383,7 +283,7 @@ class _NurseContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'List of Nurses',
+                    'Billings List',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -392,7 +292,7 @@ class _NurseContent extends StatelessWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'View and Manage Nurses.',
+                    'View and manage all patient bills, payments, and outstanding\nbalances in one place.',
                     style: TextStyle(
                       fontSize: 13,
                       color: kTextGrey,
@@ -403,23 +303,19 @@ class _NurseContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            _AddNurseButton(onTap: onAddNurse),
+            _AddButton(onTap: onAddPayment),
           ],
         ),
         const SizedBox(height: 20),
-        // Staff category tabs: Doctors, Nurses, Admin, Lab Techs, Pharmacists
-        _StaffTabs(selectedTab: selectedTab, onTabSelected: onTabSelected),
-        const SizedBox(height: 0), // No gap between tabs and table
-        // Nurses data table
-        _NursesTable(nurses: nurses),
+        _BillingTable(bills: bills),
       ],
     );
   }
 }
 
-class _AddNurseButton extends StatelessWidget {
+class _AddButton extends StatelessWidget {
   final VoidCallback onTap;
-  const _AddNurseButton({required this.onTap});
+  const _AddButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +334,7 @@ class _AddNurseButton extends StatelessWidget {
             Icon(Icons.add_rounded, color: kWhite, size: 18),
             SizedBox(width: 8),
             Text(
-              'Add Nurse',
+              'Add Payment',
               style: TextStyle(
                 color: kWhite,
                 fontSize: 14,
@@ -452,120 +348,34 @@ class _AddNurseButton extends StatelessWidget {
   }
 }
 
-// Staff category tabs - clickable to switch between staff types
-class _StaffTabs extends StatelessWidget {
-  final StaffCategory selectedTab;
-  final ValueChanged<StaffCategory> onTabSelected;
+class _BillingTable extends StatelessWidget {
+  final List<Bill> bills;
+  const _BillingTable({required this.bills});
 
-  const _StaffTabs({required this.selectedTab, required this.onTabSelected});
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Paid':
+        return kPaidBlue;
+      case 'Partially Paid':
+        return kPartialAmber;
+      case 'Unpaid':
+        return kUnpaidRed;
+      default:
+        return kTextGrey;
+    }
+  }
+
+  String _formatAmount(double? amount) {
+    if (amount == null) return 'Null';
+    return 'GH₵${amount.toStringAsFixed(0)}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: kWhite,
-        border: Border.all(color: kTeal, width: 1),
-      ),
-      child: Row(
-        children: [
-          _TabItem(
-            icon: Icons.medical_services_outlined,
-            label: 'Doctors',
-            isSelected: selectedTab == StaffCategory.doctors,
-            onTap: () => onTabSelected(StaffCategory.doctors),
-          ),
-          _TabItem(
-            icon: Icons.local_hospital_outlined,
-            label: 'Nurses',
-            isSelected: selectedTab == StaffCategory.nurses,
-            onTap: () => onTabSelected(StaffCategory.nurses),
-          ),
-          _TabItem(
-            icon: Icons.business_center_outlined,
-            label: 'Administrative Staffs',
-            isSelected: selectedTab == StaffCategory.adminStaffs,
-            onTap: () => onTabSelected(StaffCategory.adminStaffs),
-            isMultiline: true,
-          ),
-          _TabItem(
-            icon: Icons.science_outlined,
-            label: 'Lab Technicians',
-            isSelected: selectedTab == StaffCategory.labTechs,
-            onTap: () => onTabSelected(StaffCategory.labTechs),
-            isMultiline: true,
-          ),
-          _TabItem(
-            icon: Icons.local_pharmacy_outlined,
-            label: 'Pharmacists',
-            isSelected: selectedTab == StaffCategory.pharmacists,
-            onTap: () => onTabSelected(StaffCategory.pharmacists),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isMultiline;
-
-  const _TabItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.isMultiline = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? kTabSelected : kTabUnselected,
-            border: Border(right: BorderSide(color: kTeal, width: 1)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: isSelected ? kWhite : kTeal, size: 24),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? kWhite : kTeal,
-                    height: isMultiline ? 1.1 : 1.2,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NursesTable extends StatelessWidget {
-  final List<Nurse> nurses;
-  const _NursesTable({required this.nurses});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: kWhite,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -576,16 +386,22 @@ class _NursesTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Table header
+          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            color: kTableHeader,
+            decoration: const BoxDecoration(
+              color: kTableHeader,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
             child: Row(
               children: const [
                 SizedBox(
                   width: 80,
                   child: Text(
-                    'Staff ID',
+                    'Billing ID',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -596,18 +412,7 @@ class _NursesTable extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'Name',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: kTextDark,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Specialty',
+                    'Patient Name',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -618,7 +423,7 @@ class _NursesTable extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Joining Date',
+                    'Phone Number',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -629,7 +434,53 @@ class _NursesTable extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Action',
+                    'Total\nAmount',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTextDark,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Amount\nPaid',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTextDark,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Balance',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTextDark,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Date',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTextDark,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Status',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -640,15 +491,15 @@ class _NursesTable extends StatelessWidget {
               ],
             ),
           ),
-          // Table rows with alternating colors
-          ...nurses.asMap().entries.map((entry) {
+          // Rows
+          ...bills.asMap().entries.map((entry) {
             final index = entry.key;
-            final nurse = entry.value;
+            final bill = entry.value;
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: index % 2 == 0 ? kWhite : const Color(0xFFF8FCFB),
-                border: index < nurses.length - 1
+                border: index < bills.length - 1
                     ? Border(bottom: BorderSide(color: Colors.grey.shade200))
                     : null,
               ),
@@ -657,7 +508,7 @@ class _NursesTable extends StatelessWidget {
                   SizedBox(
                     width: 80,
                     child: Text(
-                      nurse.id,
+                      '${bill.id}',
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
@@ -666,34 +517,34 @@ class _NursesTable extends StatelessWidget {
                     child: Row(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             color: kTealAccent.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4),
+                            shape: BoxShape.circle,
                           ),
                           clipBehavior: Clip.antiAlias,
                           child:
-                              nurse.avatarUrl != null &&
-                                  nurse.avatarUrl!.isNotEmpty
+                              bill.avatarUrl != null &&
+                                  bill.avatarUrl!.isNotEmpty
                               ? Image.network(
-                                  nurse.avatarUrl!,
+                                  bill.avatarUrl!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const Icon(
                                     Icons.person,
-                                    size: 20,
+                                    size: 18,
                                     color: kTeal,
                                   ),
                                 )
                               : const Icon(
                                   Icons.person,
-                                  size: 20,
+                                  size: 18,
                                   color: kTeal,
                                 ),
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          nurse.name,
+                          bill.patientName,
                           style: const TextStyle(
                             fontSize: 13,
                             color: kTextDark,
@@ -704,42 +555,62 @@ class _NursesTable extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: Text(
-                      nurse.specialty,
+                      bill.phone,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Text(
-                      nurse.joinDate,
+                      _formatAmount(bill.totalAmount),
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: InkWell(
-                      onTap: () {
-                        // TODO: Navigate to nurse details
-                      },
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.north_east_rounded,
-                            size: 14,
-                            color: kTeal,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'View Details',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: kTeal,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                    child: Text(
+                      _formatAmount(bill.amountPaid),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: bill.amountPaid != null ? kTeal : kTextGrey,
+                        fontWeight: bill.amountPaid != null
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      _formatAmount(bill.balance),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: bill.balance != null && bill.balance! > 0
+                            ? kUnpaidRed
+                            : kTextGrey,
+                        fontWeight: bill.balance != null && bill.balance! > 0
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      bill.date,
+                      style: const TextStyle(fontSize: 13, color: kTextDark),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      bill.status,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _statusColor(bill.status),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -754,7 +625,7 @@ class _NursesTable extends StatelessWidget {
 }
 
 // ─── SIDEBAR, TOPBAR, FOOTER ────────────────────────────────────────────────
-// Reuse the same classes from patient_list_page.dart and billing_page.dart
+// Reuse the same classes from patient_list_page.dart
 
 class Sidebar extends StatelessWidget {
   final List<NavItem> navItems;
@@ -804,22 +675,18 @@ class Sidebar extends StatelessWidget {
               ],
             ),
           ),
-          // Build nav items with special handling for Staffs selection
-          ...navItems.map((item) {
-            final isStaffs = item.index == kNavStaff;
-            final isSelected = selectedIndex == item.index;
-            return Container(
-              color: isSelected ? kWhite : Colors.transparent,
-              child: SidebarItem(
-                icon: item.icon,
-                label: item.label,
-                isSelected: isSelected,
-                isInverted: isSelected, // White bg, teal text for Staffs
-                onTap: () => onItemSelected(item.index),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: navItems.length,
+              itemBuilder: (_, i) => SidebarItem(
+                icon: navItems[i].icon,
+                label: navItems[i].label,
+                isSelected: selectedIndex == navItems[i].index,
+                onTap: () => onItemSelected(navItems[i].index),
               ),
-            );
-          }),
-          const Spacer(),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
             child: InkWell(
@@ -857,7 +724,6 @@ class SidebarItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
-  final bool isInverted; // For white background + teal text
   final VoidCallback onTap;
 
   const SidebarItem({
@@ -865,7 +731,6 @@ class SidebarItem extends StatefulWidget {
     required this.icon,
     required this.label,
     required this.isSelected,
-    this.isInverted = false,
     required this.onTap,
   });
 
@@ -878,17 +743,6 @@ class _SidebarItemState extends State<SidebarItem> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine colors based on inverted state
-    final Color textColor = widget.isInverted ? kTeal : kWhite;
-    final Color iconColor = widget.isInverted ? kTeal : kWhite;
-    final Color bgColor = widget.isInverted
-        ? kWhite
-        : widget.isSelected
-        ? kWhite.withOpacity(0.20)
-        : _hovering
-        ? kWhite.withOpacity(0.10)
-        : Colors.transparent;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: MouseRegion(
@@ -901,21 +755,25 @@ class _SidebarItemState extends State<SidebarItem> {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             decoration: BoxDecoration(
-              color: bgColor,
+              color: widget.isSelected
+                  ? kWhite.withOpacity(0.20)
+                  : _hovering
+                  ? kWhite.withOpacity(0.10)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
-              border: widget.isSelected && !widget.isInverted
+              border: widget.isSelected
                   ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
                   : null,
             ),
             child: Row(
               children: [
-                Icon(widget.icon, color: iconColor, size: 20),
+                Icon(widget.icon, color: kWhite, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     widget.label,
                     style: TextStyle(
-                      color: textColor,
+                      color: kWhite,
                       fontSize: 14,
                       fontWeight: widget.isSelected
                           ? FontWeight.w700
@@ -933,7 +791,6 @@ class _SidebarItemState extends State<SidebarItem> {
   }
 }
 
-// TopBar and Footer are identical to other pages
 class TopBar extends StatefulWidget {
   final Uint8List? profileImageBytes;
   final ValueChanged<Uint8List> onProfileImageChanged;
@@ -1013,7 +870,7 @@ class _TopBarState extends State<TopBar> {
     };
 
     final results = <SearchResult>[];
-    final errors = <String>[];
+    final errors = <String>[]; // Track failed endpoints
 
     await Future.wait(
       endpoints.entries.map((entry) async {
@@ -1041,6 +898,7 @@ class _TopBarState extends State<TopBar> {
               );
             }
           } else {
+            // Non-200 response
             errors.add('${entry.key}: HTTP ${response.statusCode}');
             debugPrint(
               'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
@@ -1065,6 +923,7 @@ class _TopBarState extends State<TopBar> {
         _isSearching = false;
       });
 
+      // Show error snackbar if any endpoint failed
       if (errors.isNotEmpty && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1185,7 +1044,6 @@ class _TopBarState extends State<TopBar> {
       child: Row(
         children: [
           const Spacer(),
-          // Search bar
           SizedBox(
             width: 260,
             child: Column(
@@ -1241,11 +1099,9 @@ class _TopBarState extends State<TopBar> {
                     ],
                   ),
                 ),
-                // Search results dropdown
                 if (_searchResults.isNotEmpty)
                   Container(
                     constraints: const BoxConstraints(maxHeight: 260),
-                    margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
                       color: kWhite,
                       borderRadius: BorderRadius.circular(10),
@@ -1307,7 +1163,6 @@ class _TopBarState extends State<TopBar> {
             ),
           ),
           const SizedBox(width: 20),
-          // Notification bell with badge
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -1349,7 +1204,6 @@ class _TopBarState extends State<TopBar> {
             ],
           ),
           const SizedBox(width: 16),
-          // Admin profile with dropdown
           Row(
             children: [
               GestureDetector(

@@ -5,19 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 
-import 'constants/api_constants.dart';
 // Import your actual page files
 import 'admin_login_page.dart';
-import 'admin_dashboard.dart';
-import 'patient_dashboard.dart';
 import 'appointment_page.dart';
 import 'staff_page.dart';
 import 'inventory_page.dart';
 import 'billing_page.dart';
-import 'doctor_dashboard.dart';
-import 'administrative_staffs_page.dart';
-import 'lab_technicians_page.dart';
-import 'pharmacists_page.dart';
+import 'available_doctors_page.dart';
+import 'admin_dashboard.dart';
+import 'edit_patient_records.dart';
+import 'patient_dashboard.dart';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const kTeal = Color(0xFF0D7B6B);
@@ -28,11 +25,8 @@ const kBackground = Color(0xFFF0F4F4);
 const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
-const kTableHeader = Color(0xFFD0EFEC);
-const kTabSelected = Color(0xFF0D7B6B);
-const kTabUnselected = Color(0xFFFFFFFF);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-app-latest.onrender.com';
 
 // ─── NAV INDEX CONSTANTS ────────────────────────────────────────────────────
 const int kNavOverview = 0;
@@ -41,9 +35,6 @@ const int kNavAppointment = 2;
 const int kNavStaff = 3;
 const int kNavInventory = 4;
 const int kNavBillings = 5;
-
-// ─── STAFF TAB CONSTANTS ────────────────────────────────────────────────────
-enum StaffCategory { doctors, nurses, adminStaffs, labTechs, pharmacists }
 
 // ─── MODELS ─────────────────────────────────────────────────────────────────
 class SearchResult {
@@ -64,233 +55,204 @@ class NavItem {
   const NavItem({required this.icon, required this.label, required this.index});
 }
 
-class Nurse {
-  final String id;
+class Patient {
+  final int id;
   final String name;
-  final String specialty;
+  final String gender;
+  final String phone;
   final String joinDate;
   final String? avatarUrl;
 
-  const Nurse({
+  const Patient({
     required this.id,
     required this.name,
-    required this.specialty,
+    required this.gender,
+    required this.phone,
     required this.joinDate,
     this.avatarUrl,
   });
 }
 
-// ─── NURSE LIST PAGE ────────────────────────────────────────────────────────
-class NurseList extends StatefulWidget {
-  const NurseList({super.key});
+// ─── RECEPTIONIST PAGE ──────────────────────────────────────────────────────
+class ReceptionistPage extends StatefulWidget {
+  const ReceptionistPage({super.key});
 
   @override
-  State<NurseList> createState() => _NurseListState();
+  State<ReceptionistPage> createState() => _ReceptionistPageState();
 }
 
-class _NurseListState extends State<NurseList> {
+class _ReceptionistPageState extends State<ReceptionistPage> {
   Uint8List? _profileImageBytes;
-  StaffCategory _selectedTab = StaffCategory.nurses; // Nurses tab is selected
-
-  // Sidebar nav items - Staffs highlighted since we're in staff section
-  // final List<NavItem> _navItems = [
-  //   NavItem(
-  //     icon: Icons.dashboard_rounded,
-  //     label: 'Overview',
-  //     index: kNavOverview,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.personal_injury_rounded,
-  //     label: 'Patient',
-  //     index: kNavPatient,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.event_note_rounded,
-  //     label: 'Appointment',
-  //     index: kNavAppointment,
-  //   ),
-  //   NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
-  //   NavItem(
-  //     icon: Icons.inventory_2_rounded,
-  //     label: 'Inventory',
-  //     index: kNavInventory,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.receipt_long_rounded,
-  //     label: 'Billings',
-  //     index: kNavBillings,
-  //   ),
-  // ];
+  int _currentPage = 1;
 
   // Mock data matching your screenshot
-  final List<Nurse> _nurses = [
-    Nurse(
-      id: 'N#001',
-      name: 'Abena Asiedu',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=31',
+  final List<Patient> _patients = [
+    Patient(
+      id: 1,
+      name: 'Nana Owusu Ofori',
+      gender: 'Male',
+      phone: '024 123 4567',
+      joinDate: '02/04/2026',
+      avatarUrl: 'assets/images/Rectangle 2.png',
     ),
-    Nurse(
-      id: 'N#002',
-      name: 'Akosua Frimpong',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
+    Patient(
+      id: 2,
+      name: 'Adwoa Agyeman',
+      gender: 'Female',
+      phone: '055 234 5678',
+      joinDate: '04/04/2026',
+      avatarUrl: 'assets/images/Rectangle 4.png',
     ),
-    Nurse(
-      id: 'N#003',
-      name: 'Efua Nyamekye',
-      specialty: 'General Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=33',
+    Patient(
+      id: 3,
+      name: 'Kwaku Boateng',
+      gender: 'Male',
+      phone: '020 345 6789',
+      joinDate: '06/04/2026',
+      avatarUrl: 'assets/images/Rectangle 3.png',
     ),
-    Nurse(
-      id: 'N#004',
-      name: 'Adwoa Bentsi',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=34',
+    Patient(
+      id: 4,
+      name: 'Efua Boateng',
+      gender: 'Female',
+      phone: '027 456 7890',
+      joinDate: '08/04/2026',
+      avatarUrl: 'assets/images/Rectangle 6.png',
     ),
-    Nurse(
-      id: 'N#005',
-      name: 'Yaa Opong',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=35',
+    Patient(
+      id: 5,
+      name: 'Kojo Agyeman',
+      gender: 'Male',
+      phone: '026 567 8901',
+      joinDate: '10/04/2026',
+      avatarUrl: 'assets/images/Rectangle 7.png',
     ),
-    Nurse(
-      id: 'N#006',
-      name: 'Afia Koranteng',
-      specialty: 'Midwifery',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=36',
+    Patient(
+      id: 6,
+      name: 'Abena Owusu',
+      gender: 'Female',
+      phone: '054 678 9012',
+      joinDate: '12/04/2026',
+      avatarUrl: 'assets/images/Rectangle 8.png',
     ),
-    Nurse(
-      id: 'N#007',
-      name: 'Ama Gyan',
-      specialty: 'ICU / Critical Care',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=37',
+    Patient(
+      id: 7,
+      name: 'Kwasi Adu',
+      gender: 'Male',
+      phone: '059 789 0123',
+      joinDate: '14/04/2026',
+      avatarUrl: 'assets/images/Rectangle 5.png',
     ),
-    Nurse(
-      id: 'N#008',
-      name: 'Esi Koomson',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=38',
+    Patient(
+      id: 8,
+      name: 'Yaa Appiah',
+      gender: 'Female',
+      phone: '059 432 1567',
+      joinDate: '16/04/2026',
+      avatarUrl: 'assets/images/Rectangle 10.png',
     ),
-    Nurse(
-      id: 'N#009',
-      name: 'Dede Sefakor',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=39',
+    Patient(
+      id: 9,
+      name: 'Kwame Mensah',
+      gender: 'Male',
+      phone: '054 210 9876',
+      joinDate: '18/04/2026',
+      avatarUrl: 'assets/images/Rectangle 12.png',
     ),
-    Nurse(
-      id: 'N#0010',
-      name: 'Akua Mensima',
-      specialty: 'Infection Control',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=40',
+    Patient(
+      id: 10,
+      name: 'Ama Serwaa',
+      gender: 'Female',
+      phone: '026 789 6543',
+      joinDate: '20/04/2026',
+      avatarUrl: 'assets/images/Rectangle 12.png',
     ),
-    Nurse(
-      id: 'N#0011',
-      name: 'Sena Ahiable',
-      specialty: 'Public Health Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=41',
+    Patient(
+      id: 11,
+      name: 'Yaw Appiah',
+      gender: 'Male',
+      phone: '027 345 2198',
+      joinDate: '22/04/2026',
+      avatarUrl: 'assets/images/Rectangle 12.png',
     ),
-    Nurse(
-      id: 'N#0012',
-      name: 'Aba Kyei',
-      specialty: 'Paediatric Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=42',
+    Patient(
+      id: 12,
+      name: 'Afia Mensah',
+      gender: 'Female',
+      phone: '020 678 4321',
+      joinDate: '24/04/2026',
+      avatarUrl: 'assets/images/Rectangle 4.png',
     ),
-    Nurse(
-      id: 'N#0013',
-      name: 'Zainab Yakubu',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=43',
+    Patient(
+      id: 13,
+      name: 'Kofi Asante',
+      gender: 'Male',
+      phone: '055 912 3456',
+      joinDate: '28/04/2026',
+      avatarUrl: 'assets/images/Rectangle 11.png',
     ),
-    Nurse(
-      id: 'N#0014',
-      name: 'Fatima Sulemana',
-      specialty: 'Surgical Nursing',
-      joinDate: '05/03/2026',
-      avatarUrl: 'https://i.pravatar.cc/150?img=44',
+    Patient(
+      id: 14,
+      name: 'Audery Cobbinah',
+      gender: 'Female',
+      phone: '024 801 2345',
+      joinDate: '30/04/2026',
+      avatarUrl: 'assets/images/Rectangle 6.png',
     ),
   ];
 
-  // Handle sidebar navigation
-  // void _onNavItemSelected(int index) {
-  //   if (index == kNavStaff) return; // Already in staff section
-  //   switch (index) {
-  //     case kNavOverview:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const AdminDashboard()),
-  //       );
-  //       break;
-  //     case kNavPatient:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const PatientListPage()),
-  //       );
-  //       break;
-  //     case kNavAppointment:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => AppointmentPage()),
-  //       );
-  //       break;
-  //     case kNavInventory:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => InventoryPage()),
-  //       );
-  //       break;
-  //     // case kNavBillings:
-  //     //   Navigator.pushReplacement(
-  //     //     context,
-  //     //     MaterialPageRoute(builder: (_) => const BillingPage()),
-  //     //   );
-  //     //   break;
-  //   }
-  // }
+  void _deletePatient(Patient patient) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Patient'),
+        content: Text('Delete ${patient.name}? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
 
-  // Handle staff category tab clicks - navigates to respective pages
-  void _onStaffTabSelected(StaffCategory category) {
-    if (category == StaffCategory.nurses) return; // Already here
-    setState(() => _selectedTab = category);
-    switch (category) {
-      case StaffCategory.doctors:
+    if (confirm == true) {
+      setState(() {
+        _patients.removeWhere((p) => p.id == patient.id);
+      });
+    }
+  }
+
+  void _onNavItemSelected(int index) {
+    if (index == kNavPatient) return;
+    switch (index) {
+      case kNavOverview:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+        break;
+      case kNavAppointment:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AppointmentPage()),
+        );
+        break;
+      case kNavStaff:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const StaffPage()),
         );
         break;
-      case StaffCategory.adminStaffs:
+      case kNavInventory:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const AdministrativeStaffsPage()),
+          MaterialPageRoute(builder: (_) => InventoryPage()),
         );
-        break;
-      case StaffCategory.labTechs:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LabTechniciansPage()),
-        );
-        break;
-      case StaffCategory.pharmacists:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const PharmacistsPage()),
-        );
-        break;
-      case StaffCategory.nurses:
         break;
     }
   }
@@ -303,14 +265,12 @@ class _NurseListState extends State<NurseList> {
     );
   }
 
-  void _goToProfile() {}
+  void _goToProfile() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminProfilePage()));
+  }
 
   void _onProfileImageChanged(Uint8List bytes) {
     setState(() => _profileImageBytes = bytes);
-  }
-
-  void _addNurse() {
-    // TODO: implement add nurse dialog/page
   }
 
   @override
@@ -319,12 +279,6 @@ class _NurseListState extends State<NurseList> {
       backgroundColor: kBackground,
       body: Row(
         children: [
-          // Sidebar(
-          //   navItems: _navItems,
-          //   selectedIndex: kNavStaff, // Staffs highlighted in sidebar
-          //   onItemSelected: _onNavItemSelected,
-          //   onLogout: _logout,
-          // ),
           Expanded(
             child: Column(
               children: [
@@ -337,11 +291,12 @@ class _NurseListState extends State<NurseList> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-                    child: _NurseContent(
-                      nurses: _nurses,
-                      selectedTab: _selectedTab,
-                      onTabSelected: _onStaffTabSelected,
-                      onAddNurse: _addNurse,
+                    child: _PatientContent(
+                      patients: _patients,
+                      currentPage: _currentPage,
+                      onPageChanged: (page) =>
+                          setState(() => _currentPage = page),
+                      onDeletePatient: _deletePatient,
                     ),
                   ),
                 ),
@@ -355,18 +310,18 @@ class _NurseListState extends State<NurseList> {
   }
 }
 
-// ─── NURSE CONTENT ──────────────────────────────────────────────────────────
-class _NurseContent extends StatelessWidget {
-  final List<Nurse> nurses;
-  final StaffCategory selectedTab;
-  final ValueChanged<StaffCategory> onTabSelected;
-  final VoidCallback onAddNurse;
+// ─── PATIENT CONTENT ────────────────────────────────────────────────────────
+class _PatientContent extends StatelessWidget {
+  final List<Patient> patients;
+  final int currentPage;
+  final ValueChanged<int> onPageChanged;
+  final ValueChanged<Patient> onDeletePatient;
 
-  const _NurseContent({
-    required this.nurses,
-    required this.selectedTab,
-    required this.onTabSelected,
-    required this.onAddNurse,
+  const _PatientContent({
+    required this.patients,
+    required this.currentPage,
+    required this.onPageChanged,
+    required this.onDeletePatient,
   });
 
   @override
@@ -374,7 +329,6 @@ class _NurseContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header: Title + Add Nurse button
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -383,7 +337,7 @@ class _NurseContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'List of Nurses',
+                    'List of Patients',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -392,7 +346,7 @@ class _NurseContent extends StatelessWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'View and Manage Nurses.',
+                    'View and manage patient records, appointments, and history in one\nplace.',
                     style: TextStyle(
                       fontSize: 13,
                       color: kTextGrey,
@@ -403,23 +357,42 @@ class _NurseContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            _AddNurseButton(onTap: onAddNurse),
+            _ActionButton(
+              icon: Icons.swap_vert_rounded,
+              label: 'Sort',
+              onTap: () {},
+            ),
+            const SizedBox(width: 12),
+            _ActionButton(
+              icon: Icons.add_rounded,
+              label: 'Add Patient',
+              onTap: () {},
+            ),
           ],
         ),
         const SizedBox(height: 20),
-        // Staff category tabs: Doctors, Nurses, Admin, Lab Techs, Pharmacists
-        _StaffTabs(selectedTab: selectedTab, onTabSelected: onTabSelected),
-        const SizedBox(height: 0), // No gap between tabs and table
-        // Nurses data table
-        _NursesTable(nurses: nurses),
+        _PatientTable(patients: patients, onDelete: onDeletePatient),
+        const SizedBox(height: 16),
+        _Pagination(
+          currentPage: currentPage,
+          totalPages: 3,
+          onPageChanged: onPageChanged,
+        ),
       ],
     );
   }
 }
 
-class _AddNurseButton extends StatelessWidget {
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
   final VoidCallback onTap;
-  const _AddNurseButton({required this.onTap});
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -434,12 +407,12 @@ class _AddNurseButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.add_rounded, color: kWhite, size: 18),
-            SizedBox(width: 8),
+          children: [
+            Icon(icon, color: kWhite, size: 18),
+            const SizedBox(width: 8),
             Text(
-              'Add Nurse',
-              style: TextStyle(
+              label,
+              style: const TextStyle(
                 color: kWhite,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -452,120 +425,18 @@ class _AddNurseButton extends StatelessWidget {
   }
 }
 
-// Staff category tabs - clickable to switch between staff types
-class _StaffTabs extends StatelessWidget {
-  final StaffCategory selectedTab;
-  final ValueChanged<StaffCategory> onTabSelected;
+class _PatientTable extends StatelessWidget {
+  final List<Patient> patients;
+  final ValueChanged<Patient> onDelete;
 
-  const _StaffTabs({required this.selectedTab, required this.onTabSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: kWhite,
-        border: Border.all(color: kTeal, width: 1),
-      ),
-      child: Row(
-        children: [
-          _TabItem(
-            icon: Icons.medical_services_outlined,
-            label: 'Doctors',
-            isSelected: selectedTab == StaffCategory.doctors,
-            onTap: () => onTabSelected(StaffCategory.doctors),
-          ),
-          _TabItem(
-            icon: Icons.local_hospital_outlined,
-            label: 'Nurses',
-            isSelected: selectedTab == StaffCategory.nurses,
-            onTap: () => onTabSelected(StaffCategory.nurses),
-          ),
-          _TabItem(
-            icon: Icons.business_center_outlined,
-            label: 'Administrative Staffs',
-            isSelected: selectedTab == StaffCategory.adminStaffs,
-            onTap: () => onTabSelected(StaffCategory.adminStaffs),
-            isMultiline: true,
-          ),
-          _TabItem(
-            icon: Icons.science_outlined,
-            label: 'Lab Technicians',
-            isSelected: selectedTab == StaffCategory.labTechs,
-            onTap: () => onTabSelected(StaffCategory.labTechs),
-            isMultiline: true,
-          ),
-          _TabItem(
-            icon: Icons.local_pharmacy_outlined,
-            label: 'Pharmacists',
-            isSelected: selectedTab == StaffCategory.pharmacists,
-            onTap: () => onTabSelected(StaffCategory.pharmacists),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isMultiline;
-
-  const _TabItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.isMultiline = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? kTabSelected : kTabUnselected,
-            border: Border(right: BorderSide(color: kTeal, width: 1)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: isSelected ? kWhite : kTeal, size: 24),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? kWhite : kTeal,
-                    height: isMultiline ? 1.1 : 1.2,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NursesTable extends StatelessWidget {
-  final List<Nurse> nurses;
-  const _NursesTable({required this.nurses});
+  const _PatientTable({required this.patients, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: kWhite,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -576,20 +447,25 @@ class _NursesTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Table header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            color: kTableHeader,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE0F2F1),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
             child: Row(
               children: const [
                 SizedBox(
                   width: 80,
                   child: Text(
-                    'Staff ID',
+                    'Patient ID',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: kTextDark,
+                      color: kTeal,
                     ),
                   ),
                 ),
@@ -600,55 +476,65 @@ class _NursesTable extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: kTextDark,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Specialty',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: kTextDark,
+                      color: kTeal,
                     ),
                   ),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Joining Date',
+                    'Gender',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: kTextDark,
+                      color: kTeal,
                     ),
                   ),
                 ),
                 Expanded(
                   flex: 2,
+                  child: Text(
+                    'Phone Number',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTeal,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Join Date',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: kTeal,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 80,
                   child: Text(
                     'Action',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: kTextDark,
+                      color: kTeal,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // Table rows with alternating colors
-          ...nurses.asMap().entries.map((entry) {
+          ...patients.asMap().entries.map((entry) {
             final index = entry.key;
-            final nurse = entry.value;
+            final patient = entry.value;
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: index % 2 == 0 ? kWhite : const Color(0xFFF8FCFB),
-                border: index < nurses.length - 1
+                border: index < patients.length - 1
                     ? Border(bottom: BorderSide(color: Colors.grey.shade200))
                     : null,
               ),
@@ -657,7 +543,7 @@ class _NursesTable extends StatelessWidget {
                   SizedBox(
                     width: 80,
                     child: Text(
-                      nurse.id,
+                      '${patient.id}',
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
@@ -666,34 +552,36 @@ class _NursesTable extends StatelessWidget {
                     child: Row(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             color: kTealAccent.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4),
+                            shape: BoxShape.circle,
                           ),
                           clipBehavior: Clip.antiAlias,
                           child:
-                              nurse.avatarUrl != null &&
-                                  nurse.avatarUrl!.isNotEmpty
-                              ? Image.network(
-                                  nurse.avatarUrl!,
+                              patient.avatarUrl != null &&
+                                  patient.avatarUrl!.isNotEmpty
+                              ? Image.asset(
+                                  patient.avatarUrl!,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.person,
-                                    size: 20,
-                                    color: kTeal,
-                                  ),
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.person,
+                                      size: 18,
+                                      color: kTeal,
+                                    );
+                                  },
                                 )
                               : const Icon(
                                   Icons.person,
-                                  size: 20,
+                                  size: 18,
                                   color: kTeal,
                                 ),
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          nurse.name,
+                          patient.name,
                           style: const TextStyle(
                             fontSize: 13,
                             color: kTextDark,
@@ -704,43 +592,60 @@ class _NursesTable extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: Text(
-                      nurse.specialty,
+                      patient.gender,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Text(
-                      nurse.joinDate,
+                      patient.phone,
                       style: const TextStyle(fontSize: 13, color: kTextDark),
                     ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: InkWell(
-                      onTap: () {
-                        // TODO: Navigate to nurse details
-                      },
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.north_east_rounded,
-                            size: 14,
+                    child: Text(
+                      patient.joinDate,
+                      style: const TextStyle(fontSize: 13, color: kTextDark),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 80,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    EditPatientRecord(patient: patient),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.edit_outlined,
+                            size: 18,
                             color: kTeal,
                           ),
-                          SizedBox(width: 4),
-                          Text(
-                            'View Details',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: kTeal,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => onDelete(patient),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: Colors.red,
                           ),
-                        ],
-                      ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -753,187 +658,74 @@ class _NursesTable extends StatelessWidget {
   }
 }
 
-// ─── SIDEBAR, TOPBAR, FOOTER ────────────────────────────────────────────────
-// Reuse the same classes from patient_list_page.dart and billing_page.dart
+class _Pagination extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final ValueChanged<int> onPageChanged;
 
-class Sidebar extends StatelessWidget {
-  final List<NavItem> navItems;
-  final int selectedIndex;
-  final ValueChanged<int> onItemSelected;
-  final VoidCallback onLogout;
-
-  const Sidebar({
-    super.key,
-    required this.navItems,
-    required this.selectedIndex,
-    required this.onItemSelected,
-    required this.onLogout,
+  const _Pagination({
+    required this.currentPage,
+    required this.totalPages,
+    required this.onPageChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 240,
-      height: double.infinity,
-      color: kTeal,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 38,
-                  height: 38,
-                  child: Image.asset(
-                    'assets/images/Group.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Heathos',
-                  style: TextStyle(
-                    color: kWhite,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Build nav items with special handling for Staffs selection
-          ...navItems.map((item) {
-            final isStaffs = item.index == kNavStaff;
-            final isSelected = selectedIndex == item.index;
-            return Container(
-              color: isSelected ? kWhite : Colors.transparent,
-              child: SidebarItem(
-                icon: item.icon,
-                label: item.label,
-                isSelected: isSelected,
-                isInverted: isSelected, // White bg, teal text for Staffs
-                onTap: () => onItemSelected(item.index),
-              ),
-            );
-          }),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-            child: InkWell(
-              onTap: onLogout,
-              borderRadius: BorderRadius.circular(10),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: const [
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: kWhite,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, color: kWhite, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class SidebarItem extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final bool isInverted; // For white background + teal text
-  final VoidCallback onTap;
-
-  const SidebarItem({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    this.isInverted = false,
-    required this.onTap,
-  });
-
-  @override
-  State<SidebarItem> createState() => _SidebarItemState();
-}
-
-class _SidebarItemState extends State<SidebarItem> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // Determine colors based on inverted state
-    final Color textColor = widget.isInverted ? kTeal : kWhite;
-    final Color iconColor = widget.isInverted ? kTeal : kWhite;
-    final Color bgColor = widget.isInverted
-        ? kWhite
-        : widget.isSelected
-        ? kWhite.withOpacity(0.20)
-        : _hovering
-        ? kWhite.withOpacity(0.10)
-        : Colors.transparent;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovering = true),
-        onExit: (_) => setState(() => _hovering = false),
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(10),
-              border: widget.isSelected && !widget.isInverted
-                  ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Icon(widget.icon, color: iconColor, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 14,
-                      fontWeight: widget.isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton(
+          onPressed: currentPage > 1
+              ? () => onPageChanged(currentPage - 1)
+              : null,
+          child: const Text('Previous', style: TextStyle(color: kTextGrey)),
         ),
-      ),
+        const SizedBox(width: 8),
+        ...List.generate(totalPages, (index) {
+          final page = index + 1;
+          final isSelected = page == currentPage;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: InkWell(
+              onTap: () => onPageChanged(page),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isSelected ? kTeal : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isSelected ? kTeal : Colors.grey.shade300,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '$page',
+                    style: TextStyle(
+                      color: isSelected ? kWhite : kTextDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: currentPage < totalPages
+              ? () => onPageChanged(currentPage + 1)
+              : null,
+          child: const Text('Next', style: TextStyle(color: kTextGrey)),
+        ),
+      ],
     );
   }
 }
 
-// TopBar and Footer are identical to other pages
+// ─── SIDEBAR, TOPBAR, FOOTER ────────────────────────────────────────────────
 class TopBar extends StatefulWidget {
   final Uint8List? profileImageBytes;
   final ValueChanged<Uint8List> onProfileImageChanged;
@@ -1013,7 +805,7 @@ class _TopBarState extends State<TopBar> {
     };
 
     final results = <SearchResult>[];
-    final errors = <String>[];
+    final errors = <String>[]; // Track failed endpoints
 
     await Future.wait(
       endpoints.entries.map((entry) async {
@@ -1041,6 +833,7 @@ class _TopBarState extends State<TopBar> {
               );
             }
           } else {
+            // Non-200 response
             errors.add('${entry.key}: HTTP ${response.statusCode}');
             debugPrint(
               'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
@@ -1065,6 +858,7 @@ class _TopBarState extends State<TopBar> {
         _isSearching = false;
       });
 
+      // Show error snackbar if any endpoint failed
       if (errors.isNotEmpty && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1184,8 +978,19 @@ class _TopBarState extends State<TopBar> {
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
       child: Row(
         children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 16, color: kTextDark),
+              children: [
+                TextSpan(text: 'Welcome Back, '),
+                TextSpan(
+                  text: 'RECEPTIONIST',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
           const Spacer(),
-          // Search bar
           SizedBox(
             width: 260,
             child: Column(
@@ -1241,11 +1046,9 @@ class _TopBarState extends State<TopBar> {
                     ],
                   ),
                 ),
-                // Search results dropdown
                 if (_searchResults.isNotEmpty)
                   Container(
                     constraints: const BoxConstraints(maxHeight: 260),
-                    margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
                       color: kWhite,
                       borderRadius: BorderRadius.circular(10),
@@ -1307,7 +1110,6 @@ class _TopBarState extends State<TopBar> {
             ),
           ),
           const SizedBox(width: 20),
-          // Notification bell with badge
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -1349,7 +1151,6 @@ class _TopBarState extends State<TopBar> {
             ],
           ),
           const SizedBox(width: 16),
-          // Admin profile with dropdown
           Row(
             children: [
               GestureDetector(
@@ -1387,7 +1188,7 @@ class _TopBarState extends State<TopBar> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Admin_Name',
+                    'Receptionist',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1429,7 +1230,7 @@ class _TopBarState extends State<TopBar> {
                             mainAxisSize: MainAxisSize.min,
                             children: const [
                               Text(
-                                'ADMIN',
+                                'RECEPTIONIST',
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: kWhite,
@@ -1459,7 +1260,6 @@ class _TopBarState extends State<TopBar> {
   }
 }
 
-// ─── FOOTER ─────────────────────────────────────────────────────────────────
 class Footer extends StatelessWidget {
   const Footer({super.key});
   @override
@@ -1469,7 +1269,7 @@ class Footer extends StatelessWidget {
       color: kBackground,
       child: const Center(
         child: Text(
-          'Copyright © A2026.Designed by Group 5',
+          'Copyright © 2026. Designed by Group 5',
           style: TextStyle(
             color: kTeal,
             fontSize: 13,

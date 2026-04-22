@@ -1,0 +1,13 @@
+import 'package:flutter/material.dart';
+
+const kTeal = Color(0xFF0D7B6B);
+const kTealLight = Color(0xFF1A9E8A);
+const kTealDark = Color(0xFF095F54);
+const kTealAccent = Color(0xFF4FC3B0);
+const kBackground = Color(0xFFF0F4F4);
+const kWhite = Color(0xFFFFFFFF);
+const kTextDark = Color(0xFF1A2E2C);
+const kTextGrey = Color(0xFF7A9490);
+const kTableHeader = Color(0xFFD0EFEC);
+const kTabSelected = Color(0xFF0D7B6B);
+const kTabUnselected = Color(0xFFFFFFFF);

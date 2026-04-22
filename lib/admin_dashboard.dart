@@ -4,13 +4,19 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
-
-// ── Page imports — add each file as you create it ────────────────────────────
+import 'package:fl_chart/fl_chart.dart'; // ── Page imports — add each file as you create it ────────────────────────────
+import 'constants/api_constants.dart';
 import 'admin_login_page.dart';
 import 'admin_profile.dart';
-import 'patient_dashboard.dart'; // uncomment when ready
-import 'doctor_list.dart'; // uncomment when ready
-import 'nurse_list.dart'; // uncomment when ready
+import 'patient_dashboard.dart'; // PatientListPage()
+import 'doctor_list.dart'; // DoctorListPage()
+//import 'nurse_list.dart'; // NurseList()
+// New imports you specified
+import 'appointment_page.dart'; // AppointmentPage()
+import 'staff_page.dart'; // StaffDashboard()
+import 'available_doctors_page.dart'; // AvailableDoctorsPage()
+import 'billing_page.dart';
+import 'inventory_page.dart'; // InventoryPage() - uncomment when ready
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -23,13 +29,16 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-const String _baseUrl = 'https://heathos-app-latest.onrender.com';
+const String _baseUrl = kApiBaseUrl;
 
-// ─── NAV INDEX CONSTANTS — update these as you add more pages ────────────────
+// ─── NAV INDEX CONSTANTS — updated to match new UI order ────────────────
 const int _kNavOverview = 0;
 const int _kNavPatient = 1;
-const int _kNavDoctor = 2;
-const int _kNavNurse = 3;
+const int _kNavAppointment = 2;
+const int _kNavStaff = 3;
+const int _kNavInventory = 4;
+const int _kNavBillings = 5;
+// Logout handled separately at bottom
 
 // ─── SEARCH RESULT MODEL ─────────────────────────────────────────────────────
 
@@ -57,6 +66,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = _kNavOverview;
   Uint8List? _profileImageBytes;
 
+  // UPDATED: Sidebar order matches new UI — Overview, Patient, Appointment, Staff, Inventory, Billings
   final List<_NavItem> _navItems = const [
     _NavItem(
       icon: Icons.dashboard_rounded,
@@ -69,14 +79,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
       index: _kNavPatient,
     ),
     _NavItem(
-      icon: Icons.medical_services_rounded,
-      label: 'Doctor',
-      index: _kNavDoctor,
+      icon: Icons.event_note_rounded,
+      label: 'Appointment',
+      index: _kNavAppointment,
+    ),
+    _NavItem(icon: Icons.groups_rounded, label: 'Staff', index: _kNavStaff),
+    _NavItem(
+      icon: Icons.inventory_2_rounded,
+      label: 'Inventory',
+      index: _kNavInventory,
     ),
     _NavItem(
-      icon: Icons.health_and_safety_rounded,
-      label: 'Nurse',
-      index: _kNavNurse,
+      icon: Icons.receipt_long_rounded,
+      label: 'Billings',
+      index: _kNavBillings,
     ),
   ];
 
@@ -97,28 +113,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
           context,
           MaterialPageRoute(builder: (_) => PatientListPage()),
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Patient page coming soon.')),
+        break;
+
+      case _kNavAppointment:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AppointmentPage()),
         );
         break;
 
-      case _kNavDoctor:
+      case _kNavStaff:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const DoctorListPage()),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Doctor page coming soon.')),
+          MaterialPageRoute(builder: (_) => const StaffPage()),
         );
         break;
 
-      case _kNavNurse:
+      case _kNavInventory:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const NurseList()),
+          MaterialPageRoute(builder: (_) => InventoryPage()),
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nurse page coming soon.')),
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Inventory page coming soon.')),
+        // );
+        break;
+
+      case _kNavBillings:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BillingPage()),
         );
         break;
     }
@@ -129,7 +153,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginPage()),
-      (route) => true,
+      (route) => false,
     );
   }
 
@@ -249,7 +273,7 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
 
-          // ── Logout ──
+          // ── Logout at bottom ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
             child: InkWell(
@@ -262,8 +286,6 @@ class _Sidebar extends StatelessWidget {
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.logout_rounded, color: kWhite, size: 20),
-                    SizedBox(width: 12),
                     Text(
                       'Logout',
                       style: TextStyle(
@@ -432,12 +454,15 @@ class _TopBarState extends State<_TopBar> {
   // Overlay for ADMIN badge hover menu
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
-  bool _menuVisible = false;
+  Timer? _hideTimer; // NEW: controls delayed hiding
+  bool _isHoveringBadge = false; // NEW: track badge hover
+  bool _isHoveringMenu = false; // NEW: track menu hover
 
   @override
   void dispose() {
     _searchController.dispose();
     _debounce?.cancel();
+    _hideTimer?.cancel();
     _removeOverlay();
     super.dispose();
   }
@@ -484,6 +509,7 @@ class _TopBarState extends State<_TopBar> {
     };
 
     final results = <_SearchResult>[];
+    final errors = <String>[]; // Track failed endpoints
 
     await Future.wait(
       endpoints.entries.map((entry) async {
@@ -491,6 +517,7 @@ class _TopBarState extends State<_TopBar> {
           final response = await http
               .get(Uri.parse(entry.value))
               .timeout(const Duration(seconds: 30));
+
           if (response.statusCode == 200) {
             final body = jsonDecode(response.body);
             final List<dynamic> items = body is List
@@ -509,9 +536,22 @@ class _TopBarState extends State<_TopBar> {
                 ),
               );
             }
+          } else {
+            // Non-200 response
+            errors.add('${entry.key}: HTTP ${response.statusCode}');
+            debugPrint(
+              'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
+            );
           }
-        } catch (_) {
-          // Silently skip failed endpoints
+        } on TimeoutException {
+          errors.add('${entry.key}: Request timed out');
+          debugPrint('Search timeout for ${entry.key}');
+        } on FormatException catch (e) {
+          errors.add('${entry.key}: Invalid JSON');
+          debugPrint('Search JSON error for ${entry.key}: $e');
+        } catch (e) {
+          errors.add('${entry.key}: $e');
+          debugPrint('Search error for ${entry.key}: $e');
         }
       }),
     );
@@ -521,12 +561,25 @@ class _TopBarState extends State<_TopBar> {
         _searchResults = results;
         _isSearching = false;
       });
+
+      // Show error snackbar if any endpoint failed
+      if (errors.isNotEmpty && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Search errors: ${errors.join(', ')}'),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
-  // ── ADMIN badge overlay menu ──────────────────────────────────────────────
+  // ── ADMIN badge overlay menu - UPDATED TO USE TEXT BUTTONS ─────────────────
   void _showAdminMenu() {
-    if (_menuVisible) return;
+    _hideTimer?.cancel(); // Cancel any pending hide
+    if (_overlayEntry != null) return; // Already showing
+
     _overlayEntry = OverlayEntry(
       builder: (_) => Positioned(
         width: 150,
@@ -535,12 +588,14 @@ class _TopBarState extends State<_TopBar> {
           showWhenUnlinked: false,
           offset: const Offset(-40, 38),
           child: MouseRegion(
-            // Keep open while hovering the menu itself
-            onEnter: (_) {},
-            onExit: (_) =>
-                Future.delayed(const Duration(milliseconds: 150), () {
-                  if (mounted) _removeOverlay();
-                }),
+            onEnter: (_) {
+              _isHoveringMenu = true;
+              _hideTimer?.cancel(); // Stay open while on menu
+            },
+            onExit: (_) {
+              _isHoveringMenu = false;
+              _scheduleHide(); // Try to hide after delay
+            },
             child: Material(
               elevation: 8,
               borderRadius: BorderRadius.circular(10),
@@ -552,26 +607,52 @@ class _TopBarState extends State<_TopBar> {
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── Profile ──────────────────────────────────────
-                    _OverlayMenuItem(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Profile',
-                      onTap: () {
+                    TextButton.icon(
+                      onPressed: () {
                         _removeOverlay();
-                        widget.onGoToProfile(); // → AdminProfilePage
+                        widget.onGoToProfile();
                       },
+                      icon: const Icon(
+                        Icons.person_outline_rounded,
+                        size: 16,
+                        color: kTeal,
+                      ),
+                      label: const Text(
+                        'Profile',
+                        style: TextStyle(color: kTextDark, fontSize: 13),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
                     ),
                     Divider(height: 1, color: Colors.grey.shade200),
-                    // ── Logout ───────────────────────────────────────
-                    _OverlayMenuItem(
-                      icon: Icons.logout_rounded,
-                      label: 'Logout',
-                      isDestructive: true,
-                      onTap: () {
+                    TextButton.icon(
+                      onPressed: () {
                         _removeOverlay();
-                        widget.onLogout(); // → AdminLoginPage
+                        widget.onLogout();
                       },
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        size: 16,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -582,13 +663,21 @@ class _TopBarState extends State<_TopBar> {
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _menuVisible = true);
+  }
+
+  void _scheduleHide() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(milliseconds: 200), () {
+      // Only hide if mouse is not over badge OR menu
+      if (!_isHoveringBadge && !_isHoveringMenu) {
+        _removeOverlay();
+      }
+    });
   }
 
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-    if (mounted) setState(() => _menuVisible = false);
   }
 
   @override
@@ -829,17 +918,28 @@ class _TopBarState extends State<_TopBar> {
                   const SizedBox(height: 2),
 
                   // ── ADMIN badge — hover shows Profile / Logout menu ──
+                  // ── ADMIN badge — hover shows Profile / Logout menu ──
                   CompositedTransformTarget(
                     link: _layerLink,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
-                      onEnter: (_) => _showAdminMenu(),
-                      onExit: (_) =>
-                          Future.delayed(const Duration(milliseconds: 200), () {
-                            if (mounted) _removeOverlay();
-                          }),
+                      onEnter: (_) {
+                        _isHoveringBadge = true;
+                        _hideTimer?.cancel();
+                        _showAdminMenu();
+                      },
+                      onExit: (_) {
+                        _isHoveringBadge = false;
+                        _scheduleHide(); // Only hides if not over menu either
+                      },
                       child: GestureDetector(
-                        onTap: _menuVisible ? _removeOverlay : _showAdminMenu,
+                        onTap: () {
+                          if (_overlayEntry == null) {
+                            _showAdminMenu();
+                          } else {
+                            _removeOverlay();
+                          }
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -878,64 +978,6 @@ class _TopBarState extends State<_TopBar> {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── OVERLAY MENU ITEM ────────────────────────────────────────────────────────
-
-class _OverlayMenuItem extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _OverlayMenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isDestructive = false,
-  });
-
-  @override
-  State<_OverlayMenuItem> createState() => _OverlayMenuItemState();
-}
-
-class _OverlayMenuItemState extends State<_OverlayMenuItem> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.isDestructive ? Colors.red : kTeal;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: _hovering ? color.withOpacity(0.08) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(widget.icon, size: 15, color: color),
-              const SizedBox(width: 8),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: widget.isDestructive ? Colors.red : kTextDark,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1006,42 +1048,54 @@ class _LiveDateTimeState extends State<_LiveDateTime> {
   }
 }
 
-// ─── DOCTORS PILL ────────────────────────────────────────────────────────────
+// ─── DOCTORS PILL - NOW CLICKABLE ─────────────────────────────────────────────
 
 class _DoctorsPill extends StatelessWidget {
   const _DoctorsPill();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: BoxDecoration(
-        color: kTeal,
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Text(
-            '10',
-            style: TextStyle(
-              color: kWhite,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-            ),
+    return GestureDetector(
+      // UPDATED: Navigate to AvailableDoctorsPage when tapped
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AvailableDoctorsPage()),
+        );
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          decoration: BoxDecoration(
+            color: kTeal,
+            borderRadius: BorderRadius.circular(32),
           ),
-          SizedBox(width: 12),
-          Text(
-            'Available Doctors',
-            style: TextStyle(
-              color: kWhite,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                '10',
+                style: TextStyle(
+                  color: kWhite,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Available Doctors',
+                style: TextStyle(
+                  color: kWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.monitor_heart_outlined, color: kWhite, size: 22),
+            ],
           ),
-          SizedBox(width: 8),
-          Icon(Icons.monitor_heart_outlined, color: kWhite, size: 22),
-        ],
+        ),
       ),
     );
   }
@@ -1065,25 +1119,26 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // UPDATED: Labels to match new UI
     const stats = [
       _StatData(
         icon: Icons.local_hospital_rounded,
-        value: '200+',
+        value: '40',
         label: 'Medical\nStaff',
       ),
       _StatData(
         icon: Icons.people_alt_rounded,
-        value: '300+',
+        value: '30',
         label: 'Total\nPatients',
       ),
       _StatData(
         icon: Icons.groups_rounded,
-        value: '5000+',
+        value: '100',
         label: 'Over\nVisitors',
       ),
       _StatData(
         icon: Icons.work_rounded,
-        value: '100+',
+        value: '20',
         label: 'Administration\nstaff',
       ),
     ];
@@ -1169,7 +1224,24 @@ class _StatCardState extends State<_StatCard> {
   }
 }
 
-// ─── PATIENT STATISTICS CARD ─────────────────────────────────────────────────
+class BillingPage extends StatelessWidget {
+  const BillingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Billings')),
+      body: const Center(
+        child: Text(
+          'Billings page coming soon.',
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── PATIENT STATISTICS CARD (New) ────────────────────────────────────────────
 
 class _PatientStatsCard extends StatelessWidget {
   const _PatientStatsCard();
@@ -1192,6 +1264,7 @@ class _PatientStatsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Title + Legend Row ────────────────────────────────
           Row(
             children: [
               const Text(
@@ -1199,7 +1272,7 @@ class _PatientStatsCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: kTextDark,
+                  color: kTeal, // Matches UI: teal title
                 ),
               ),
               const Spacer(),
@@ -1209,13 +1282,144 @@ class _PatientStatsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(height: 260, child: _AreaChart()),
+
+          // ─── CHART TO MATCH SCREENSHOT ─────────────────────────
+          SizedBox(
+            height: 220,
+            child: LineChart(
+              LineChartData(
+                minY: 0,
+                maxY: 600,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 150,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.grey.withOpacity(0.3),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 35,
+                      interval: 150,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: const TextStyle(fontSize: 11, color: kTextGrey),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        const days = [
+                          'Monday',
+                          'Tuesday',
+                          'Wednesday',
+                          'Thursday',
+                          'Friday',
+                          'Saturday',
+                          'Sunday',
+                        ];
+                        if (value.toInt() >= 0 && value.toInt() < days.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              days[value.toInt()],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: kTextGrey,
+                              ),
+                            ),
+                          );
+                        }
+                        return const Text('');
+                      },
+                    ),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                lineBarsData: [
+                  // Discharged Patients - light teal, back layer
+                  LineChartBarData(
+                    isCurved: false, // UI uses sharp peaks
+                    color: kTealAccent,
+                    barWidth: 0, // No line, only area
+                    dotData: FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: kTealAccent.withOpacity(0.3),
+                    ),
+                    spots: const [
+                      FlSpot(0, 300), // Mon
+                      FlSpot(1, 480), // Tue - peak
+                      FlSpot(2, 180), // Wed
+                      FlSpot(3, 360), // Thu
+                      FlSpot(4, 280), // Fri
+                      FlSpot(5, 200), // Sat
+                      FlSpot(6, 400), // Sun
+                    ],
+                  ),
+                  // Admitted Patients - darker teal, front layer with dots
+                  LineChartBarData(
+                    isCurved: false, // UI uses sharp peaks
+                    color: kTeal,
+                    barWidth: 0, // No line, only area
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                            radius: 3,
+                            color: kTeal,
+                            strokeWidth: 0,
+                          ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: kTeal.withOpacity(0.5),
+                    ),
+                    spots: const [
+                      FlSpot(0, 120), // Mon
+                      FlSpot(1, 80), // Tue
+                      FlSpot(2, 150), // Wed
+                      FlSpot(3, 60), // Thu
+                      FlSpot(4, 580), // Fri - big peak
+                      FlSpot(5, 90), // Sat
+                      FlSpot(6, 140), // Sun
+                    ],
+                  ),
+                ],
+                lineTouchData: LineTouchData(enabled: true),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// Make sure this _LegendDot class exists above or in same file
 class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
@@ -1226,8 +1430,8 @@ class _LegendDot extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
@@ -1237,195 +1441,7 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-// ─── AREA CHART ──────────────────────────────────────────────────────────────
-
-class _AreaChart extends StatelessWidget {
-  final List<double> series1 = const [280, 300, 260, 130, 310, 370, 440];
-  final List<double> series2 = const [380, 260, 340, 240, 200, 290, 410];
-  final List<String> days = const [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
-
-  _AreaChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _AreaChartPainter(
-        series1: series1,
-        series2: series2,
-        days: days,
-      ),
-      child: Container(),
-    );
-  }
-}
-
-class _AreaChartPainter extends CustomPainter {
-  final List<double> series1;
-  final List<double> series2;
-  final List<String> days;
-
-  const _AreaChartPainter({
-    required this.series1,
-    required this.series2,
-    required this.days,
-  });
-
-  static const double _leftPad = 48;
-  static const double _bottomPad = 40;
-  static const double _topPad = 12;
-  static const double _maxVal = 600;
-  static const int _gridLines = 4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final chartW = size.width - _leftPad;
-    final chartH = size.height - _bottomPad - _topPad;
-
-    final gridPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.15)
-      ..strokeWidth = 1;
-    const labelStyle = TextStyle(color: kTextGrey, fontSize: 11);
-
-    for (int i = 0; i <= _gridLines; i++) {
-      final y = _topPad + chartH - (i / _gridLines) * chartH;
-      canvas.drawLine(Offset(_leftPad, y), Offset(size.width, y), gridPaint);
-      final val = ((i / _gridLines) * _maxVal).round();
-      final tp = TextPainter(
-        text: TextSpan(text: '$val', style: labelStyle),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(0, y - tp.height / 2));
-    }
-
-    Offset pt(int index, double val) {
-      final x = _leftPad + (index / (days.length - 1)) * chartW;
-      final y = _topPad + chartH - (val / _maxVal) * chartH;
-      return Offset(x, y);
-    }
-
-    _drawArea(
-      canvas,
-      series2,
-      pt,
-      chartH,
-      size,
-      const Color(0xFF4FC3B0).withOpacity(0.22),
-      const Color(0xFF4FC3B0).withOpacity(0.0),
-    );
-    _drawArea(
-      canvas,
-      series1,
-      pt,
-      chartH,
-      size,
-      kTeal.withOpacity(0.50),
-      kTeal.withOpacity(0.04),
-    );
-    _drawLine(canvas, series2, pt, kTealAccent, 2.0);
-    _drawLine(canvas, series1, pt, kTeal, 2.5);
-
-    final dotFill = Paint()
-      ..color = kTeal
-      ..style = PaintingStyle.fill;
-    final dotBorder = Paint()
-      ..color = kWhite
-      ..style = PaintingStyle.fill;
-    for (int i = 0; i < series1.length; i++) {
-      final p = pt(i, series1[i]);
-      canvas.drawCircle(p, 5.5, dotBorder);
-      canvas.drawCircle(p, 3.5, dotFill);
-    }
-
-    for (int i = 0; i < days.length; i++) {
-      final tp = TextPainter(
-        text: TextSpan(text: days[i], style: labelStyle),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      final x = _leftPad + (i / (days.length - 1)) * chartW;
-      tp.paint(canvas, Offset(x - tp.width / 2, size.height - _bottomPad + 10));
-    }
-
-    canvas.drawLine(
-      Offset(_leftPad, _topPad + chartH),
-      Offset(size.width, _topPad + chartH),
-      gridPaint..color = Colors.grey.withOpacity(0.30),
-    );
-  }
-
-  void _drawArea(
-    Canvas canvas,
-    List<double> data,
-    Offset Function(int, double) pt,
-    double chartH,
-    Size size,
-    Color topColor,
-    Color bottomColor,
-  ) {
-    final path = Path()
-      ..moveTo(pt(0, data[0]).dx, _topPad + chartH)
-      ..lineTo(pt(0, data[0]).dx, pt(0, data[0]).dy);
-    for (int i = 1; i < data.length; i++) {
-      final prev = pt(i - 1, data[i - 1]);
-      final curr = pt(i, data[i]);
-      final cpX = (prev.dx + curr.dx) / 2;
-      path.cubicTo(cpX, prev.dy, cpX, curr.dy, curr.dx, curr.dy);
-    }
-    path
-      ..lineTo(pt(data.length - 1, data.last).dx, _topPad + chartH)
-      ..close();
-    final rect = Rect.fromLTWH(
-      _leftPad,
-      _topPad,
-      size.width - _leftPad,
-      chartH,
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [topColor, bottomColor],
-        ).createShader(rect),
-    );
-  }
-
-  void _drawLine(
-    Canvas canvas,
-    List<double> data,
-    Offset Function(int, double) pt,
-    Color color,
-    double strokeWidth,
-  ) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final path = Path()..moveTo(pt(0, data[0]).dx, pt(0, data[0]).dy);
-    for (int i = 1; i < data.length; i++) {
-      final prev = pt(i - 1, data[i - 1]);
-      final curr = pt(i, data[i]);
-      final cpX = (prev.dx + curr.dx) / 2;
-      path.cubicTo(cpX, prev.dy, cpX, curr.dy, curr.dx, curr.dy);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ─── FOOTER ──────────────────────────────────────────────────────────────────
+// ─── FOOTER (New) ────────────────────────────────────────────────────────────
 
 class _Footer extends StatelessWidget {
   const _Footer();
@@ -1437,7 +1453,7 @@ class _Footer extends StatelessWidget {
       color: kBackground,
       child: const Center(
         child: Text(
-          'Copyright © A2026. Designed by Group 5',
+          'Copyright © 2026. Designed by Group 5',
           style: TextStyle(
             color: kTeal,
             fontSize: 13,

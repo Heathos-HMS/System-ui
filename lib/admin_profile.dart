@@ -27,7 +27,7 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── NAV INDEX CONSTANTS ────────────────────────────────────────────────────
 const int kNavOverview = 0;

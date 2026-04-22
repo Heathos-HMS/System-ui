@@ -32,7 +32,7 @@ const kTableHeader = Color(0xFFD0EFEC);
 const kTabSelected = Color(0xFF0D7B6B);
 const kTabUnselected = Color(0xFFFFFFFF);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── NAV INDEX CONSTANTS ────────────────────────────────────────────────────
 const int kNavOverview = 0;

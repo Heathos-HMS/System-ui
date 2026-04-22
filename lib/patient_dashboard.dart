@@ -218,7 +218,7 @@ import 'constants/api_constants.dart';
 import 'admin_login_page.dart';
 import 'patient_reg.dart';
 
-const String baseUrl = kApiBaseUrl;
+const String baseUrl = 'https://heathos-api.onrender.com';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});

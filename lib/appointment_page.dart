@@ -1753,7 +1753,7 @@ const kWarning = Color(0xFFFF9800);
 const kError = Color(0xFFF44336);
 const kBorder = Color(0xFFE0E0E0);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── MODELS ─────────────────────────────────────────────────────────────────
 enum AppointmentType { IN_PERSON, VIRTUAL }

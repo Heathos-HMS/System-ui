@@ -29,7 +29,7 @@ const kPaidBlue = Color(0xFF2E9CCA);
 const kPartialAmber = Color(0xFFC5A031);
 const kUnpaidRed = Color(0xFFD14343);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── NAV INDEX CONSTANTS ────────────────────────────────────────────────────
 const int kNavOverview = 0;

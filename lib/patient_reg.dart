@@ -24,7 +24,7 @@ const kCardBg = Color(0xFFF5F8F8);
 const kBorder = Color(0xFF000000);
 const kBlack = Color(0xFF000000);
 
-const String _baseUrl = kApiBaseUrl;
+const String _baseUrl = 'https://heathos-api.onrender.com';
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 class PatientRegistrationPage extends StatefulWidget {

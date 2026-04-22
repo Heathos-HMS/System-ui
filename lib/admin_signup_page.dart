@@ -11,7 +11,7 @@ import 'lab_technicians_page.dart';
 import 'billing_staff_dashboard.dart';
 
 // ── Base URL ─────────────────────────heathos─────────────────────────────────────────
-const String _signupBaseUrl = kApiBaseUrlWithApi;
+const String _signupBaseUrl = 'https://heathos-api.onrender.com';
 
 // ── Colour tokens ─────────────────────────────────────────────────────────────
 const _cTeal = Color.fromARGB(255, 1, 211, 193);
@@ -127,7 +127,7 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
     try {
       final response = await http
           .post(
-            Uri.parse('$_signupBaseUrl/auth/register'),
+            Uri.parse('$_signupBaseUrl/api/auth/register'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'fullName': _fullNameController.text.trim(),

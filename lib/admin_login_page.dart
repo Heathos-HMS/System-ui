@@ -13,7 +13,7 @@ import 'billing_staff_dashboard.dart';
 import 'patient_dashboard.dart';
 
 // ── Base URL ──────────────────────────────────────────────────────────────────
-const String _loginBaseUrl = kApiBaseUrlWithApi;
+const String _loginBaseUrl = 'https://heathos-api.onrender.com';
 
 // ── Colour tokens ─────────────────────────────────────────────────────────────
 const _cTeal = Color.fromARGB(255, 1, 211, 193);
@@ -110,7 +110,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     try {
       final response = await http
           .post(
-            Uri.parse('$_loginBaseUrl/auth/login'),
+            Uri.parse('$_loginBaseUrl/api/auth/login'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'email': _emailController.text.trim(),

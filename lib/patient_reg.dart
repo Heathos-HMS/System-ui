@@ -24,7 +24,7 @@ const kCardBg = Color(0xFFF5F8F8);
 const kBorder = Color(0xFF000000);
 const kBlack = Color(0xFF000000);
 
-const String _baseUrl = 'https://heathos-api.onrender.com';
+const String _BaseUrl = 'https://heathos-api.onrender.com';
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 class PatientRegistrationPage extends StatefulWidget {
@@ -124,7 +124,7 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
     try {
       final response = await http
           .post(
-            Uri.parse('$_baseUrl/api/patients'),
+            Uri.parse('$_BaseUrl/api/patients'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               "fullName": _fullNameController.text.trim(),

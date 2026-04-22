@@ -29,7 +29,7 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 
-const String _baseUrl = 'https://heathos-api.onrender.com';
+const String _BaseUrl = 'https://heathos-api.onrender.com';
 
 // ─── NAV INDEX CONSTANTS — updated to match new UI order ────────────────
 const int _kNavOverview = 0;
@@ -502,10 +502,10 @@ class _TopBarState extends State<_TopBar> {
     setState(() => _isSearching = true);
 
     final endpoints = {
-      'Doctor': '$_baseUrl/doctors/search?q=$query',
-      'Patient': '$_baseUrl/patients/search?q=$query',
-      'Nurse': '$_baseUrl/nurses/search?q=$query',
-      'Staff': '$_baseUrl/staff/search?q=$query',
+      'Doctor': '$_BaseUrl/doctors/search?q=$query',
+      'Patient': '$_BaseUrl/patients/search?q=$query',
+      'Nurse': '$_BaseUrl/nurses/search?q=$query',
+      'Staff': '$_BaseUrl/staff/search?q=$query',
     };
 
     final results = <_SearchResult>[];

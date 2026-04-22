@@ -1753,7 +1753,7 @@ const kWarning = Color(0xFFFF9800);
 const kError = Color(0xFFF44336);
 const kBorder = Color(0xFFE0E0E0);
 
-const String _baseUrl = 'https://heathos-api.onrender.com';
+const String _BaseUrl = 'https://heathos-api.onrender.com';
 
 // ─── MODELS ─────────────────────────────────────────────────────────────────
 enum AppointmentType { IN_PERSON, VIRTUAL }
@@ -1972,7 +1972,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
 
   Future<void> _fetchDoctors() async {
     try {
-      final res = await http.get(Uri.parse('$_baseUrl/doctors'));
+      final res = await http.get(Uri.parse('$_BaseUrl/doctors'));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         final List data = body['data'] ?? body;
@@ -1986,7 +1986,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
 
   Future<void> _fetchPatients() async {
     try {
-      final res = await http.get(Uri.parse('$_baseUrl/patients'));
+      final res = await http.get(Uri.parse('$_BaseUrl/patients'));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         final List data = body['data'] ?? body;
@@ -2008,7 +2008,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       final res = await http.get(
         Uri.parse(
-          '$_baseUrl/api/appointments/slots?doctor_id=${_selectedDoctor!.id}&date=$dateStr',
+          '$_BaseUrl/api/appointments/slots?doctor_id=${_selectedDoctor!.id}&date=$dateStr',
         ),
       );
       if (res.statusCode == 200) {
@@ -2040,7 +2040,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       final res = await http.get(
         Uri.parse(
-          '$_baseUrl/api/appointments/queue?doctor_id=${_selectedDoctor!.id}&date=$dateStr',
+          '$_BaseUrl/api/appointments/queue?doctor_id=${_selectedDoctor!.id}&date=$dateStr',
         ),
       );
       if (res.statusCode == 200) {
@@ -2073,7 +2073,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
     setState(() => _isBooking = true);
     try {
       final res = await http.post(
-        Uri.parse('$_baseUrl/api/appointments'),
+        Uri.parse('$_BaseUrl/api/appointments'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'patientId': _selectedPatient!.id,
@@ -2105,7 +2105,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
   Future<void> _checkInPatient(String appointmentId) async {
     try {
       final res = await http.patch(
-        Uri.parse('$_baseUrl/api/appointments/$appointmentId/checkin'),
+        Uri.parse('$_BaseUrl/api/appointments/$appointmentId/checkin'),
       );
       if (res.statusCode == 200) {
         _showSuccess('Patient checked in');
@@ -2122,7 +2122,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
   Future<void> _cancelAppointment(String appointmentId) async {
     try {
       final res = await http.patch(
-        Uri.parse('$_baseUrl/api/appointments/$appointmentId/cancel'),
+        Uri.parse('$_BaseUrl/api/appointments/$appointmentId/cancel'),
       );
       if (res.statusCode == 200) {
         _showSuccess('Appointment cancelled');
@@ -3420,10 +3420,10 @@ class _TopBarState extends State<TopBar> {
     setState(() => _isSearching = true);
 
     final endpoints = {
-      'Doctor': '$_baseUrl/doctors/search?q=$query',
-      'Patient': '$_baseUrl/patients/search?q=$query',
-      'Nurse': '$_baseUrl/nurses/search?q=$query',
-      'Staff': '$_baseUrl/staff/search?q=$query',
+      'Doctor': '$_BaseUrl/doctors/search?q=$query',
+      'Patient': '$_BaseUrl/patients/search?q=$query',
+      'Nurse': '$_BaseUrl/nurses/search?q=$query',
+      'Staff': '$_BaseUrl/staff/search?q=$query',
     };
 
     final results = <SearchResult>[];

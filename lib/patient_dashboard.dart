@@ -218,7 +218,7 @@ import 'constants/api_constants.dart';
 import 'admin_login_page.dart';
 import 'patient_reg.dart';
 
-const String baseUrl = 'https://heathos-api.onrender.com';
+const String _BaseUrl = 'https://heathos-api.onrender.com';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -264,7 +264,7 @@ class _PatientListPageState extends State<PatientListPage> {
     setState(() => isLoading = true);
 
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/patients'));
+      final response = await http.get(Uri.parse('$_BaseUrl/api/patients'));
 
       final data = jsonDecode(response.body);
 
@@ -288,7 +288,7 @@ class _PatientListPageState extends State<PatientListPage> {
   Future<void> deletePatient(String id) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/api/patients/$id'),
+        Uri.parse('$_BaseUrl/api/patients/$id'),
       );
 
       final data = jsonDecode(response.body);
@@ -311,7 +311,7 @@ class _PatientListPageState extends State<PatientListPage> {
   Future<void> updatePatient(String id, Map body) async {
     try {
       final response = await http.put(
-        Uri.parse('$baseUrl/api/patients/$id'),
+        Uri.parse('$_BaseUrl/api/patients/$id'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );

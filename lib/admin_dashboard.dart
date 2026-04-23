@@ -108,12 +108,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
         // Already on this page — do nothing
         break;
 
+        // In _onNavItemSelected method, update case _kNavPatient:
       case _kNavPatient:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => PatientListPage()),
+          MaterialPageRoute(
+            builder: (_) =>
+                const PatientListPage(isAdminView: true), // ADD THIS FLAG
+          ),
         );
         break;
+
+      // case _kNavPatient:
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(builder: (_) => PatientListPage()),
+      //   );
+      //   break;
 
       case _kNavAppointment:
         Navigator.push(

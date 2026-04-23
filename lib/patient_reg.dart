@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'constants/api_constants.dart';
@@ -21,7 +22,10 @@ const kWhite = Color(0xFFFFFFFF);
 const kTextDark = Color(0xFF1A2E2C);
 const kTextGrey = Color(0xFF7A9490);
 const kCardBg = Color(0xFFF5F8F8);
-const kBorder = Color(0xFF000000);
+const kSuccess = Color(0xFF4CAF50);
+const kWarning = Color(0xFFFF9800);
+const kError = Color(0xFFF44336);
+const kBorder = Color(0xFFE0E0E0);
 const kBlack = Color(0xFF000000);
 
 const String _BaseUrl = 'https://heathos-api.onrender.com';
@@ -47,12 +51,15 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
-  final _genderController = TextEditingController();
   final _addressController = TextEditingController();
   final _emergencyContactController = TextEditingController();
   final _insuranceProviderController = TextEditingController();
   final _insuranceNumberController = TextEditingController();
+
+  // CHANGE 1: Gender dropdown + DOB date
+  String? _selectedGender;
   String? _selectedBloodGroup;
+  DateTime? _selectedDob;
 
   @override
   void dispose() {
@@ -60,7 +67,6 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
     _emailController.dispose();
     _phoneController.dispose();
     _dobController.dispose();
-    _genderController.dispose();
     _addressController.dispose();
     _emergencyContactController.dispose();
     _insuranceProviderController.dispose();
@@ -110,7 +116,35 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
     });
   }
 
-  // ✅ FULL API INTEGRATION
+  // CHANGE 2: DOB calendar picker
+  Future<void> _pickDateOfBirth() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDob ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: kTeal,
+              onPrimary: kWhite,
+              onSurface: kTextDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDob = picked;
+        _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  // ✅ FULL API INTEGRATION - Save to backend + return true to refresh list
   Future<void> _savePatient() async {
     if (_fullNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -132,7 +166,7 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
               "phone": _phoneController.text.trim(),
               "bloodGroup": _selectedBloodGroup ?? '',
               "dob": _dobController.text.trim(),
-              "gender": _genderController.text.trim(),
+              "gender": _selectedGender ?? '', // CHANGED: Use dropdown value
               "address": _addressController.text.trim(),
               "emergencyContact": _emergencyContactController.text.trim(),
               "insuranceProvider": _insuranceProviderController.text.trim(),
@@ -145,7 +179,8 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showSuccess('Patient saved successfully');
-        _goBack();
+        // CHANGED: Pop with true so PatientListPage refreshes
+        Navigator.pop(context, true);
       } else {
         _showError(body['message'] ?? 'Failed to save patient');
       }
@@ -236,8 +271,20 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
                             : null,
                       ),
                       const SizedBox(width: 20),
+                      // CHANGE 3: Teal button
                       ElevatedButton(
                         onPressed: _uploadProfilePhoto,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kTeal,
+                          foregroundColor: kWhite,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                         child: const Text("Upload Image"),
                       ),
                     ],
@@ -254,8 +301,8 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
                       _field("Email", _emailController),
                       _field("Phone", _phoneController),
                       _bloodGroupDropdown(),
-                      _field("Date of Birth (YYYY-MM-DD)", _dobController),
-                      _field("Gender", _genderController),
+                      _dobField(), // CHANGED: Calendar picker
+                      _genderDropdown(), // CHANGED: Dropdown
                       _field("Address", _addressController),
                       _field("Emergency Contact", _emergencyContactController),
                       _field(
@@ -273,18 +320,48 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
 
                   Row(
                     children: [
+                      // CHANGE 4: Teal Save button
                       ElevatedButton(
                         onPressed: _isLoading ? null : _savePatient,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kTeal,
+                          foregroundColor: kWhite,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                         child: _isLoading
-                            ? const CircularProgressIndicator()
-                            : const Text("Save", selectionColor: Colors.teal),
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: kWhite,
+                                ),
+                              )
+                            : const Text(
+                                "Save",
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                       ),
                       const SizedBox(width: 20),
+                      // CHANGE 5: Teal Schedule button
                       TextButton(
                         onPressed: _proceedWithAppointment,
+                        style: TextButton.styleFrom(
+                          foregroundColor: kTeal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                        ),
                         child: const Text(
                           "Schedule Appointment",
-                          selectionColor: Colors.teal,
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -312,6 +389,43 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
     );
   }
 
+  // CHANGE 6: DOB with calendar picker
+  Widget _dobField() {
+    return SizedBox(
+      width: 250,
+      child: TextFormField(
+        controller: _dobController,
+        readOnly: true,
+        onTap: _pickDateOfBirth,
+        decoration: InputDecoration(
+          labelText: 'Date of Birth',
+          hintText: 'YYYY-MM-DD',
+          border: const OutlineInputBorder(),
+          suffixIcon: const Icon(Icons.calendar_today, color: kTeal),
+        ),
+      ),
+    );
+  }
+
+  // CHANGE 7: Gender dropdown
+  Widget _genderDropdown() {
+    return SizedBox(
+      width: 250,
+      child: DropdownButtonFormField<String>(
+        value: _selectedGender,
+        decoration: const InputDecoration(
+          labelText: 'Gender',
+          border: OutlineInputBorder(),
+        ),
+        items: const [
+          DropdownMenuItem(value: 'Male', child: Text('Male')),
+          DropdownMenuItem(value: 'Female', child: Text('Female')),
+        ],
+        onChanged: (val) => setState(() => _selectedGender = val),
+      ),
+    );
+  }
+
   Widget _bloodGroupDropdown() {
     const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     return SizedBox(
@@ -326,6 +440,554 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
             .map((g) => DropdownMenuItem(value: g, child: Text(g)))
             .toList(),
         onChanged: (val) => setState(() => _selectedBloodGroup = val),
+      ),
+    );
+  }
+}
+
+// TopBar and Footer - reuse from previous code
+class TopBar extends StatefulWidget {
+  final Uint8List? profileImageBytes;
+  final ValueChanged<Uint8List> onProfileImageChanged;
+  final VoidCallback onLogout;
+  final VoidCallback onGoToProfile;
+
+  const TopBar({
+    super.key,
+    required this.profileImageBytes,
+    required this.onProfileImageChanged,
+    required this.onLogout,
+    required this.onGoToProfile,
+  });
+
+  @override
+  State<TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<TopBar> {
+  final _searchController = TextEditingController();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  Timer? _hideTimer;
+  bool _isHoveringBadge = false;
+  bool _isHoveringMenu = false;
+  List<SearchResult> _searchResults = [];
+  bool _isSearching = false;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _hideTimer?.cancel();
+    _debounce?.cancel();
+    _removeOverlay();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => _runSearch(query.trim()),
+    );
+  }
+
+  // DO NOT TOUCH - User specified block
+  Future<void> _runSearch(String query) async {
+    setState(() => _isSearching = true);
+
+    final endpoints = {
+      'Doctor': '$_BaseUrl/doctors/search?q=$query',
+      'Patient': '$_BaseUrl/patients/search?q=$query',
+      'Nurse': '$_BaseUrl/nurses/search?q=$query',
+      'Staff': '$_BaseUrl/staff/search?q=$query',
+    };
+
+    final results = <SearchResult>[];
+    final errors = <String>[]; // Track failed endpoints
+
+    await Future.wait(
+      endpoints.entries.map((entry) async {
+        try {
+          final response = await http
+              .get(Uri.parse(entry.value))
+              .timeout(const Duration(seconds: 30));
+
+          if (response.statusCode == 200) {
+            final body = jsonDecode(response.body);
+            final List<dynamic> items = body is List
+                ? body
+                : (body['data'] as List? ?? []);
+            for (final item in items) {
+              results.add(
+                SearchResult(
+                  name:
+                      item['fullName'] as String? ??
+                      item['name'] as String? ??
+                      'Unknown',
+                  category: entry.key,
+                  subtitle:
+                      item['email'] as String? ?? item['id'] as String? ?? '',
+                ),
+              );
+            }
+          } else {
+            // Non-200 response
+            errors.add('${entry.key}: HTTP ${response.statusCode}');
+            debugPrint(
+              'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
+            );
+          }
+        } on TimeoutException {
+          errors.add('${entry.key}: Request timed out');
+          debugPrint('Search timeout for ${entry.key}');
+        } on FormatException catch (e) {
+          errors.add('${entry.key}: Invalid JSON');
+          debugPrint('Search JSON error for ${entry.key}: $e');
+        } catch (e) {
+          errors.add('${entry.key}: $e');
+          debugPrint('Search error for ${entry.key}: $e');
+        }
+      }),
+    );
+
+    if (mounted) {
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+
+      // Show error snackbar if any endpoint failed
+      if (errors.isNotEmpty && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Search errors: ${errors.join(', ')}'),
+            backgroundColor: Colors.orange.shade700,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAdminMenu() {
+    _hideTimer?.cancel();
+    if (_overlayEntry != null) return;
+    _overlayEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        width: 150,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(-40, 38),
+          child: MouseRegion(
+            onEnter: (_) {
+              _isHoveringMenu = true;
+              _hideTimer?.cancel();
+            },
+            onExit: (_) {
+              _isHoveringMenu = false;
+              _scheduleHide();
+            },
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: kWhite,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        _removeOverlay();
+                        widget.onGoToProfile();
+                      },
+                      icon: const Icon(
+                        Icons.person_outline,
+                        size: 16,
+                        color: kTeal,
+                      ),
+                      label: const Text(
+                        'Profile',
+                        style: TextStyle(color: kTextDark, fontSize: 13),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: Colors.grey.shade200),
+                    TextButton.icon(
+                      onPressed: () {
+                        _removeOverlay();
+                        widget.onLogout();
+                      },
+                      icon: const Icon(
+                        Icons.logout,
+                        size: 16,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _scheduleHide() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(milliseconds: 200), () {
+      if (!_isHoveringBadge && !_isHoveringMenu) _removeOverlay();
+    });
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  Future<void> _pickProfileImage() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result != null && result.files.first.bytes != null) {
+        widget.onProfileImageChanged(result.files.first.bytes!);
+      }
+    } catch (e) {
+      debugPrint('File pick error: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: kWhite,
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 38,
+                height: 38,
+                child: Image.asset(
+                  'assets/images/Group.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.local_hospital, color: kTeal, size: 32),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Heathos',
+                style: TextStyle(
+                  color: kTeal,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Align(
+              //   alignment: Alignment.center,
+              //   child: Text(
+              //     'Appointment Booking',
+              //     style: TextStyle(
+              //       color: const Color.fromARGB(255, 17, 22, 21),
+              //       fontSize: 20,
+              //       fontWeight: FontWeight.w500,
+              //     ),
+              //   ),
+              // ),
+            ],
+          ),
+          const Spacer(),
+          SizedBox(
+            width: 260,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: kTeal, width: 1.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: kTextGrey,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          decoration: const InputDecoration(
+                            hintText: 'Search',
+                            hintStyle: TextStyle(
+                              color: kTextGrey,
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ),
+                      _isSearching
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: kTeal,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.mic_rounded,
+                              color: kTextGrey,
+                              size: 18,
+                            ),
+                      const SizedBox(width: 14),
+                    ],
+                  ),
+                ),
+                if (_searchResults.isNotEmpty)
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 260),
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color: kWhite,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      itemCount: _searchResults.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade100),
+                      itemBuilder: (_, i) {
+                        final r = _searchResults[i];
+                        return ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: kTeal.withOpacity(0.12),
+                            child: Text(
+                              r.category[0],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: kTeal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            r.name,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: kTextDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${r.category} · ${r.subtitle}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: kTextGrey,
+                            ),
+                          ),
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() => _searchResults = []);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: kTeal, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.notifications_rounded,
+                  color: kTeal,
+                  size: 20,
+                ),
+              ),
+              Positioned(
+                top: -4,
+                right: -2,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: kWhite,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          CompositedTransformTarget(
+            link: _layerLink,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) {
+                _isHoveringBadge = true;
+                _hideTimer?.cancel();
+                _showAdminMenu();
+              },
+              onExit: (_) {
+                _isHoveringBadge = false;
+                _scheduleHide();
+              },
+              child: GestureDetector(
+                onTap: () {
+                  if (_overlayEntry == null) {
+                    _showAdminMenu();
+                  } else {
+                    _removeOverlay();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: kCardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: kBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickProfileImage,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: kTealAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: widget.profileImageBytes != null
+                              ? ClipOval(
+                                  child: Image.memory(
+                                    widget.profileImageBytes!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.person,
+                                  color: kWhite,
+                                  size: 18,
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'VERA DUGAH',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Footer extends StatelessWidget {
+  const Footer({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      color: kBackground,
+      child: const Center(
+        child: Text(
+          'Copyright © A2026.Designed by Group 5',
+          style: TextStyle(
+            color: kTeal,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

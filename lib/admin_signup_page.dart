@@ -143,7 +143,19 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (!mounted) return;
-        _navigateToDashboard(_selectedRole!.apiValue);
+
+        // CHANGED: Show success and go to login instead of dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully. Please log in.'),
+            backgroundColor: _cTeal,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminLoginPage()),
+        );
       } else {
         setState(() {
           _errorMessage =
@@ -166,32 +178,6 @@ class _AdminSignUpPageState extends State<AdminSignUpPage> {
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────
-  void _navigateToDashboard(String role) {
-    Widget destination;
-    switch (role) {
-      case 'DOCTOR':
-        destination = const AdminDashboard();
-        break;
-      case 'RECEPTIONIST':
-        destination = const PatientListPage();
-        break;
-      case 'LAB_TECHNICIAN':
-        destination = const LabTechniciansPage();
-        break;
-      case 'BILLING_OFFICER':
-        destination = const BillingStaffDashboard();
-        break;
-      case 'ADMIN':
-      default:
-        destination = const AdminDashboard();
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
-  }
-
   void _goToLogin() => Navigator.pushReplacement(
     context,
     MaterialPageRoute(builder: (_) => const AdminLoginPage()),

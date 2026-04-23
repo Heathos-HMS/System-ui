@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html' as html;
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -156,17 +157,27 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
     setState(() => _isLoading = true);
 
     try {
+      // ✅ Get token first
+      final token = html.window.localStorage['token'] ?? '';
+      if (token.isEmpty) {
+        _showError('No token found. Please log in again.');
+        return;
+      }
+
       final response = await http
           .post(
             Uri.parse('$_BaseUrl/api/patients'),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token', // ✅ Added
+            },
             body: jsonEncode({
               "fullName": _fullNameController.text.trim(),
               "email": _emailController.text.trim(),
               "phone": _phoneController.text.trim(),
               "bloodGroup": _selectedBloodGroup ?? '',
               "dob": _dobController.text.trim(),
-              "gender": _selectedGender ?? '', // CHANGED: Use dropdown value
+              "gender": _selectedGender ?? '',
               "address": _addressController.text.trim(),
               "emergencyContact": _emergencyContactController.text.trim(),
               "insuranceProvider": _insuranceProviderController.text.trim(),
@@ -175,19 +186,32 @@ class _PatientRegistrationPageState extends State<PatientRegistrationPage> {
           )
           .timeout(const Duration(seconds: 20));
 
+      // ✅ Guard against empty response
+      if (!mounted) return;
+      if (response.body.isEmpty) {
+        _showError('Server returned empty response. Check backend logs.');
+        return;
+      }
+
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showSuccess('Patient saved successfully');
-        // CHANGED: Pop with true so PatientListPage refreshes
         Navigator.pop(context, true);
       } else {
         _showError(body['message'] ?? 'Failed to save patient');
       }
+
     } catch (e) {
-      _showError(e.toString());
+      if (e is TimeoutException) {
+        _showError('Request timed out. Please try again.');
+      } else if (e is FormatException) {
+        _showError('Invalid response from server.');
+      } else {
+        _showError(e.toString());
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false); // ✅ mounted guard
     }
   }
 

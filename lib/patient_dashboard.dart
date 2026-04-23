@@ -1314,7 +1314,7 @@ class _PatientListPageState extends State<PatientListPage> {
       }
 
       final response = await http.get(
-        Uri.parse('$_BaseUrl/api/patients'),
+        Uri.parse('$_BaseUrl/api/patients/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -1543,13 +1543,17 @@ class _PatientListPageState extends State<PatientListPage> {
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
-  // Navigate to registration and refresh on return
+    // Navigate to registration and refresh on return
   Future<void> _navigateToAddPatient() async {
-    await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PatientRegistrationPage()),
     );
-    fetchPatients(); // Refresh list after returning
+
+    // ✅ Only refresh if a patient was actually saved
+    if (result == true) {
+      await fetchPatients();
+    }
   }
 
   // ───────── UI ─────────

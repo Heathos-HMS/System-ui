@@ -1,86 +1,186 @@
 // import 'dart:async';
 // import 'dart:convert';
+// import 'dart:html' as html;
 // import 'dart:typed_data';
 // import 'package:flutter/material.dart';
 // import 'package:http/http.dart' as http;
-// import 'package:file_picker/file_picker.dart';
-
-// // Import your actual page files
-// import 'admin_login_page.dart';
-// import 'admin_dashboard.dart';
-// import 'patient_dashboard.dart';
-// import 'appointment_page.dart';
-// import 'staff_page.dart';
-// import 'inventory_page.dart';
-// import 'billing_page.dart';
-// // Import the other staff category pages
-// import 'nurse_list.dart';
-// import 'administrative_staffs_page.dart';
-// import 'lab_technicians_page.dart';
-// import 'pharmacists_page.dart';
+// import 'package:intl/intl.dart';
 
 // // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 // const kTeal = Color(0xFF0D7B6B);
 // const kTealLight = Color(0xFF1A9E8A);
-// const kTealDark = Color(0xFF095F54);
 // const kTealAccent = Color(0xFF4FC3B0);
 // const kBackground = Color(0xFFF0F4F4);
 // const kWhite = Color(0xFFFFFFFF);
 // const kTextDark = Color(0xFF1A2E2C);
 // const kTextGrey = Color(0xFF7A9490);
-// const kTableHeader = Color(0xFFD0EFEC);
-// const kTabSelected = Color(0xFF0D7B6B);
-// const kTabUnselected = Color(0xFFFFFFFF);
+// const kCardBg = Color(0xFFFFFFFF);
+// const kSuccess = Color(0xFF4CAF50);
+// const kWarning = Color(0xFFFF9800);
+// const kError = Color(0xFFF44336);
+// const kBorder = Color(0xFFE0E0);
+// const kUrgent = Color(0xFFFF5252);
 
-// const String _baseUrl = 'https://heathos-app-latest.onrender.com';
-
-// // ─── NAV INDEX CONSTANTS ────────────────────────────────────────────────────
-// const int kNavOverview = 0;
-// const int kNavPatient = 1;
-// const int kNavAppointment = 2;
-// const int kNavStaff = 3;
-// const int kNavInventory = 4;
-// const int kNavBillings = 5;
-
-// // ─── STAFF TAB CONSTANTS ────────────────────────────────────────────────────
-// enum StaffCategory { doctors, nurses, adminStaffs, labTechs, pharmacists }
+// const String _BaseUrl = 'https://heathos-api.onrender.com';
 
 // // ─── MODELS ─────────────────────────────────────────────────────────────────
-// class SearchResult {
-//   final String name;
-//   final String category;
-//   final String subtitle;
-//   const SearchResult({
-//     required this.name,
-//     required this.category,
-//     required this.subtitle,
+// enum AppointmentStatus { SCHEDULED, CHECKED_IN, COMPLETED, CANCELLED }
+// enum Urgency { NORMAL, URGENT }
+
+// class QueuePatient {
+//   final String appointmentId;
+//   final String patientId;
+//   final String patientName;
+//   final String? patientAvatar;
+//   final String slotTime;
+//   final String? complaint;
+//   final DateTime checkInTime;
+
+//   const QueuePatient({
+//     required this.appointmentId,
+//     required this.patientId,
+//     required this.patientName,
+//     this.patientAvatar,
+//     required this.slotTime,
+//     this.complaint,
+//     required this.checkInTime,
 //   });
+
+//   factory QueuePatient.fromJson(Map<String, dynamic> json) => QueuePatient(
+//         appointmentId: json['id'] ?? '',
+//         patientId: json['patientId'] ?? '',
+//         patientName: json['patientName'] ?? 'Unknown',
+//         patientAvatar: json['patientAvatar'],
+//         slotTime: json['slotDatetime'] ?? '',
+//         complaint: json['complaint'],
+//         checkInTime: DateTime.tryParse(json['checkInTime'] ?? '') ?? DateTime.now(),
+//       );
+
+//   String get waitTime {
+//     final diff = DateTime.now().difference(checkInTime);
+//     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+//     return '${diff.inHours}h ${diff.inMinutes % 60}m';
+//   }
 // }
 
-// class NavItem {
-//   final IconData icon;
-//   final String label;
-//   final int index;
-//   const NavItem({required this.icon, required this.label, required this.index});
+// class PatientSummary {
+//   final List<ClinicalNote> notes;
+//   final List<VitalRecord> vitals;
+
+//   const PatientSummary({required this.notes, required this.vitals});
+
+//   factory PatientSummary.fromJson(Map<String, dynamic> json) => PatientSummary(
+//         notes: (json['notes'] as List? ?? []).map((e) => ClinicalNote.fromJson(e)).toList(),
+//         vitals: (json['vitals'] as List? ?? []).map((e) => VitalRecord.fromJson(e)).toList(),
+//       );
 // }
 
-// class Doctor {
+// class ClinicalNote {
 //   final String id;
-//   final String name;
-//   final String specialty;
-//   final String joinDate;
-//   final String? avatarUrl;
+//   final String complaint;
+//   final String findings;
+//   final String plan;
+//   final String diagnosis;
+//   final bool hereditary;
+//   final DateTime createdAt;
+//   final List<Prescription> prescriptions;
+//   final List<LabOrder> labOrders;
 
-//   const Doctor({
+//   const ClinicalNote({
 //     required this.id,
-//     required this.name,
-//     required this.specialty,
-//     required this.joinDate,
-//     this.avatarUrl,
+//     required this.complaint,
+//     required this.findings,
+//     required this.plan,
+//     required this.diagnosis,
+//     required this.hereditary,
+//     required this.createdAt,
+//     required this.prescriptions,
+//     required this.labOrders,
 //   });
+
+//   factory ClinicalNote.fromJson(Map<String, dynamic> json) => ClinicalNote(
+//         id: json['id'] ?? '',
+//         complaint: json['complaint'] ?? '',
+//         findings: json['findings'] ?? '',
+//         plan: json['plan'] ?? '',
+//         diagnosis: json['diagnosis'] ?? '',
+//         hereditary: json['hereditary'] ?? false,
+//         createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+//         prescriptions: (json['prescriptions'] as List? ?? []).map((e) => Prescription.fromJson(e)).toList(),
+//         labOrders: (json['labOrders'] as List? ?? []).map((e) => LabOrder.fromJson(e)).toList(),
+//       );
 // }
 
-// // ─── DOCTOR DASHBOARD PAGE ──────────────────────────────────────────────────
+// class Prescription {
+//   final String drugName;
+//   final String dosage;
+//   final String frequency;
+//   final int durationDays;
+
+//   const Prescription({
+//     required this.drugName,
+//     required this.dosage,
+//     required this.frequency,
+//     required this.durationDays,
+//   });
+
+//   factory Prescription.fromJson(Map<String, dynamic> json) => Prescription(
+//         drugName: json['drugName'] ?? '',
+//         dosage: json['dosage'] ?? '',
+//         frequency: json['frequency'] ?? '',
+//         durationDays: json['durationDays'] ?? 0,
+//       );
+
+//   Map<String, dynamic> toJson() => {
+//         'drugName': drugName,
+//         'dosage': dosage,
+//         'frequency': frequency,
+//         'durationDays': durationDays,
+//       };
+// }
+
+// class LabOrder {
+//   final String testName;
+//   final Urgency urgency;
+
+//   const LabOrder({required this.testName, required this.urgency});
+
+//   factory LabOrder.fromJson(Map<String, dynamic> json) => LabOrder(
+//         testName: json['testName'] ?? '',
+//         urgency: json['urgency'] == 'URGENT' ? Urgency.URGENT : Urgency.NORMAL,
+//       );
+
+//   Map<String, dynamic> toJson() => {
+//         'testName': testName,
+//         'urgency': urgency == Urgency.URGENT ? 'URGENT' : 'NORMAL',
+//       };
+// }
+
+// class VitalRecord {
+//   final double? temperature;
+//   final String? bloodPressure;
+//   final int? pulse;
+//   final int? o2Saturation;
+//   final DateTime recordedAt;
+
+//   const VitalRecord({
+//     this.temperature,
+//     this.bloodPressure,
+//     this.pulse,
+//     this.o2Saturation,
+//     required this.recordedAt,
+//   });
+
+//   factory VitalRecord.fromJson(Map<String, dynamic> json) => VitalRecord(
+//         temperature: (json['temperature'] as num?)?.toDouble(),
+//         bloodPressure: json['bloodPressure'],
+//         pulse: json['pulse'],
+//         o2Saturation: json['o2Saturation'],
+//         recordedAt: DateTime.tryParse(json['recordedAt'] ?? '') ?? DateTime.now(),
+//       );
+// }
+
+// // ─── DOCTOR DASHBOARD ───────────────────────────────────────────────────────
 // class DoctorDashboard extends StatefulWidget {
 //   const DoctorDashboard({super.key});
 
@@ -89,227 +189,388 @@
 // }
 
 // class _DoctorDashboardState extends State<DoctorDashboard> {
-//   Uint8List? _profileImageBytes;
-//   StaffCategory _selectedTab = StaffCategory.doctors;
+//   List<QueuePatient> _queue = [];
+//   QueuePatient? _activePatient;
+//   PatientSummary? _patientHistory;
+  
+//   bool _isLoadingQueue = true;
+//   bool _isLoadingHistory = false;
+//   Timer? _queuePollTimer;
+  
+//   String _doctorId = '';
+//   String _doctorName = 'Dr. Smith';
 
-//   //Sidebar items - Staffs is selected with white background
-//   final List<NavItem> _navItems = [
-//     NavItem(
-//       icon: Icons.dashboard_rounded,
-//       label: 'Overview',
-//       index: kNavOverview,
-//     ),
-//     NavItem(
-//       icon: Icons.personal_injury_rounded,
-//       label: 'Patient',
-//       index: kNavPatient,
-//     ),
-//     NavItem(
-//       icon: Icons.event_note_rounded,
-//       label: 'Appointment',
-//       index: kNavAppointment,
-//     ),
-//     NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
-//     NavItem(
-//       icon: Icons.inventory_2_rounded,
-//       label: 'Inventory',
-//       index: kNavInventory,
-//     ),
-//     NavItem(
-//       icon: Icons.receipt_long_rounded,
-//       label: 'Billings',
-//       index: kNavBillings,
-//     ),
-//   ];
+//   final _complaintController = TextEditingController();
+//   final _findingsController = TextEditingController();
+//   final _planController = TextEditingController();
+//   final _diagnosisController = TextEditingController();
+//   bool _hereditary = false;
 
-//   // Mock data matching your screenshot
-//   final List<Doctor> _doctors = [
-//     Doctor(
-//       id: 'D#001',
-//       name: 'Dr. Daniel Osei',
-//       specialty: 'General Practitioner',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/drjackline.png',
-//     ),
-//     Doctor(
-//       id: 'D#002',
-//       name: 'Dr. Deborah Essel',
-//       specialty: 'Radiologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#004.png',
-//     ),
-//     Doctor(
-//       id: 'D#003',
-//       name: 'Dr. Thomas Otoo',
-//       specialty: 'Paediatrician',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#005.png',
-//     ),
-//     Doctor(
-//       id: 'D#004',
-//       name: 'Dr. Beatrice Antwi',
-//       specialty: 'Gynaecologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#006.png',
-//     ),
-//     Doctor(
-//       id: 'D#005',
-//       name: 'Dr. Richard Aidoo',
-//       specialty: 'Dermatologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#003.png',
-//     ),
-//     Doctor(
-//       id: 'D#006',
-//       name: 'Dr. Helen Frempong',
-//       specialty: 'Paediatrician',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#0010.png',
-//     ),
-//     Doctor(
-//       id: 'D#007',
-//       name: 'Dr. George Abbey',
-//       specialty: 'Cardiologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#009.png',
-//     ),
-//     Doctor(
-//       id: 'D#008',
-//       name: 'Dr. Vivian Lartey',
-//       specialty: 'Dermatologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#008.png',
-//     ),
-//     Doctor(
-//       id: 'D#009',
-//       name: 'Dr. Isaac Quaye',
-//       specialty: 'Orthopaedic Surgeon',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/#008.png',
-//     ),
-//     Doctor(
-//       id: 'D#0010',
-//       name: 'Dr. Jackline Sam',
-//       specialty: 'Endocrinologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/drsam.png',
-//     ),
-//     Doctor(
-//       id: 'D#0011',
-//       name: 'Dr. Grace Dankwa',
-//       specialty: 'Urologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/Rectangle 1-2.png',
-//     ),
-//     Doctor(
-//       id: 'D#0012',
-//       name: 'Dr.Joseph Kwofie',
-//       specialty: 'Oncologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/Rectangle 1-3.png',
-//     ),
-//     Doctor(
-//       id: 'D#0013',
-//       name: 'Dr. Patricia Quaye',
-//       specialty: 'Gastroenterologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/Rectangle 1-4.png',
-//     ),
-//     Doctor(
-//       id: 'D#0014',
-//       name: 'Dr. Lord Glasmen',
-//       specialty: 'Neurologist',
-//       joinDate: '04/03/2026',
-//       avatarUrl: 'assets/images/Rectangle 1-5.png',
-//     ),
-//   ];
+//   final _tempController = TextEditingController();
+//   final _bpController = TextEditingController();
+//   final _pulseController = TextEditingController();
+//   final _o2Controller = TextEditingController();
 
-//   void _onNavItemSelected(int index) {
-//     if (index == kNavStaff) return; // Already here
-//     switch (index) {
-//       case kNavOverview:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const AdminDashboard()),
-//         );
-//         break;
-//       case kNavPatient:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const PatientListPage()),
-//         );
-//         break;
-//       case kNavAppointment:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => AppointmentPage()),
-//         );
-//         break;
-//       case kNavInventory:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => InventoryPage()),
-//         );
-//         break;
-//       // case kNavBillings:
-//       //   Navigator.pushReplacement(
-//       //     context,
-//       //     MaterialPageRoute(builder: (_) => const BillingPage()),
-//       //   );
-//       //   break;
+//   List<Prescription> _prescriptions = [];
+//   List<LabOrder> _labOrders = [];
+//   String? _currentNoteId;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadDoctorInfo();
+//     _fetchQueue();
+//     _startQueuePolling();
+//   }
+
+//   @override
+//   void dispose() {
+//     _queuePollTimer?.cancel();
+//     _complaintController.dispose();
+//     _findingsController.dispose();
+//     _planController.dispose();
+//     _diagnosisController.dispose();
+//     _tempController.dispose();
+//     _bpController.dispose();
+//     _pulseController.dispose();
+//     _o2Controller.dispose();
+//     super.dispose();
+//   }
+
+//   void _loadDoctorInfo() {
+//     _doctorId = html.window.localStorage['userId'] ?? '';
+//     _doctorName = html.window.localStorage['fullName'] ?? 'Doctor';
+//   }
+
+//   void _startQueuePolling() {
+//     _queuePollTimer = Timer.periodic(const Duration(seconds: 20), (_) => _fetchQueue());
+//   }
+
+//   Future<void> _fetchQueue() async {
+//     if (!mounted) return;
+//     setState(() => _isLoadingQueue = true);
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+//       final res = await http.get(
+//         Uri.parse('$_BaseUrl/api/appointments/queue?doctor_id=$_doctorId&date=$dateStr'),
+//         headers: {'Authorization': 'Bearer $token'},
+//       );
+
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         final List data = body['data'] ?? [];
+//         if (!mounted) return;
+//         setState(() {
+//           _queue = data.map((e) => QueuePatient.fromJson(e)).toList();
+//           _isLoadingQueue = false;
+//         });
+//       } else {
+//         if (!mounted) return;
+//         setState(() => _isLoadingQueue = false);
+//       }
+//     } catch (e) {
+//       if (!mounted) return;
+//       setState(() => _isLoadingQueue = false);
+//       _showError('Failed to load queue: $e');
 //     }
 //   }
 
-//   // Handle tab switching - navigates to respective pages
-//   void _onStaffTabSelected(StaffCategory category) {
-//     if (category == StaffCategory.doctors) return; // Already here
-//     setState(() => _selectedTab = category);
-//     switch (category) {
-//       case StaffCategory.nurses:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const NurseList()),
-//         );
-//         break;
-//       case StaffCategory.adminStaffs:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const AdministrativeStaffsPage()),
-//         );
-//         break;
-//       case StaffCategory.labTechs:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const LabTechniciansPage()),
-//         );
-//         break;
-//       case StaffCategory.pharmacists:
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (_) => const PharmacistsPage()),
-//         );
-//         break;
-//       case StaffCategory.doctors:
-//         break;
+//   Future<void> _startConsultation(QueuePatient patient) async {
+//     setState(() {
+//       _activePatient = patient;
+//       _isLoadingHistory = true;
+//     });
+//     await _fetchPatientHistory(patient.patientId);
+//     _clearForms();
+//   }
+
+//   Future<void> _fetchPatientHistory(String patientId) async {
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       final res = await http.get(
+//         Uri.parse('$_BaseUrl/api/clinical/patients/$patientId/summary'),
+//         headers: {'Authorization': 'Bearer $token'},
+//       );
+
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         if (!mounted) return;
+//         setState(() {
+//           _patientHistory = PatientSummary.fromJson(body['data'] ?? {});
+//           _isLoadingHistory = false;
+//         });
+//       }
+//     } catch (e) {
+//       if (!mounted) return;
+//       setState(() => _isLoadingHistory = false);
+//       _showError('Failed to load patient history: $e');
 //     }
 //   }
 
-//   void _logout() {
-//     Navigator.pushAndRemoveUntil(
-//       context,
-//       MaterialPageRoute(builder: (_) => const AdminLoginPage()),
-//       (route) => false,
+//   Future<void> _saveVitals() async {
+//     if (_activePatient == null) return;
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       final res = await http.post(
+//         Uri.parse('$_BaseUrl/api/clinical/vitals'),
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': 'Bearer $token',
+//         },
+//         body: jsonEncode({
+//           'patientId': _activePatient!.patientId,
+//           'recordedBy': _doctorId,
+//           'temperature': double.tryParse(_tempController.text),
+//           'bloodPressure': _bpController.text,
+//           'pulse': int.tryParse(_pulseController.text),
+//           'o2Saturation': int.tryParse(_o2Controller.text),
+//         }),
+//       );
+
+//       if (res.statusCode == 200) {
+//         _showSuccess('Vitals recorded');
+//         _tempController.clear();
+//         _bpController.clear();
+//         _pulseController.clear();
+//         _o2Controller.clear();
+//         await _fetchPatientHistory(_activePatient!.patientId);
+//       } else {
+//         _showError('Failed to save vitals');
+//       }
+//     } catch (e) {
+//       _showError('Error: $e');
+//     }
+//   }
+
+//   Future<void> _saveNote() async {
+//     if (_activePatient == null) return;
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       final res = await http.post(
+//         Uri.parse('$_BaseUrl/api/clinical/notes'),
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': 'Bearer $token',
+//         },
+//         body: jsonEncode({
+//           'patientId': _activePatient!.patientId,
+//           'doctorId': _doctorId,
+//           'appointmentId': _activePatient!.appointmentId,
+//           'complaint': _complaintController.text,
+//           'findings': _findingsController.text,
+//           'plan': _planController.text,
+//           'diagnosis': _diagnosisController.text,
+//           'hereditary': _hereditary,
+//         }),
+//       );
+
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         _currentNoteId = body['data']['id'];
+//         _showSuccess('Note saved. Now add prescriptions or lab orders.');
+//         await _fetchPatientHistory(_activePatient!.patientId);
+//       } else {
+//         _showError('Failed to save note');
+//       }
+//     } catch (e) {
+//       _showError('Error: $e');
+//     }
+//   }
+
+//   Future<void> _savePrescription() async {
+//     if (_currentNoteId == null || _activePatient == null) {
+//       _showError('Save clinical note first');
+//       return;
+//     }
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       for (final p in _prescriptions) {
+//         final res = await http.post(
+//           Uri.parse('$_BaseUrl/api/clinical/prescriptions'),
+//           headers: {
+//             'Content-Type': 'application/json',
+//             'Authorization': 'Bearer $token',
+//           },
+//           body: jsonEncode({
+//             'patientId': _activePatient!.patientId,
+//             'noteId': _currentNoteId,
+//             ...p.toJson(),
+//           }),
+//         );
+//         if (res.statusCode != 200) throw Exception('Failed to save ${p.drugName}');
+//       }
+//       _showSuccess('Prescriptions saved');
+//       setState(() => _prescriptions.clear());
+//       await _fetchPatientHistory(_activePatient!.patientId);
+//     } catch (e) {
+//       _showError('Error: $e');
+//     }
+//   }
+
+//   Future<void> _saveLabOrder() async {
+//     if (_currentNoteId == null || _activePatient == null) {
+//       _showError('Save clinical note first');
+//       return;
+//     }
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       for (final l in _labOrders) {
+//         final res = await http.post(
+//           Uri.parse('$_BaseUrl/api/clinical/lab-orders'),
+//           headers: {
+//             'Content-Type': 'application/json',
+//             'Authorization': 'Bearer $token',
+//           },
+//           body: jsonEncode({
+//             'patientId': _activePatient!.patientId,
+//             'doctorId': _doctorId,
+//             'noteId': _currentNoteId,
+//             ...l.toJson(),
+//           }),
+//         );
+//         if (res.statusCode != 200) throw Exception('Failed to order ${l.testName}');
+//       }
+//       _showSuccess('Lab orders placed');
+//       setState(() => _labOrders.clear());
+//       await _fetchPatientHistory(_activePatient!.patientId);
+//     } catch (e) {
+//       _showError('Error: $e');
+//     }
+//   }
+
+//   Future<void> _completeConsultation() async {
+//     if (_activePatient == null) return;
+//     try {
+//       final token = html.window.localStorage['token'] ?? '';
+//       final res = await http.patch(
+//         Uri.parse('$_BaseUrl/api/appointments/${_activePatient!.appointmentId}/complete'),
+//         headers: {'Authorization': 'Bearer $token'},
+//       );
+//       if (res.statusCode == 200) {
+//         _showSuccess('Consultation completed');
+//         setState(() => _activePatient = null);
+//         _clearForms();
+//         await _fetchQueue();
+//       }
+//     } catch (e) {
+//       _showError('Failed to complete: $e');
+//     }
+//   }
+
+//   void _clearForms() {
+//     _complaintController.clear();
+//     _findingsController.clear();
+//     _planController.clear();
+//     _diagnosisController.clear();
+//     _tempController.clear();
+//     _bpController.clear();
+//     _pulseController.clear();
+//     _o2Controller.clear();
+//     _hereditary = false;
+//     _prescriptions.clear();
+//     _labOrders.clear();
+//     _currentNoteId = null;
+//   }
+
+//   void _addPrescriptionDialog() {
+//     final drugController = TextEditingController();
+//     final dosageController = TextEditingController();
+//     final freqController = TextEditingController();
+//     final daysController = TextEditingController();
+
+//     showDialog(
+//       context: context,
+//       builder: (_) => AlertDialog(
+//         title: const Text('Add Prescription'),
+//         content: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             TextField(controller: drugController, decoration: const InputDecoration(labelText: 'Drug Name')),
+//             TextField(controller: dosageController, decoration: const InputDecoration(labelText: 'Dosage')),
+//             TextField(controller: freqController, decoration: const InputDecoration(labelText: 'Frequency')),
+//             TextField(controller: daysController, decoration: const InputDecoration(labelText: 'Duration (days)'), keyboardType: TextInputType.number),
+//           ],
+//         ),
+//         actions: [
+//           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+//           ElevatedButton(
+//             onPressed: () {
+//               setState(() {
+//                 _prescriptions.add(Prescription(
+//                   drugName: drugController.text,
+//                   dosage: dosageController.text,
+//                   frequency: freqController.text,
+//                   durationDays: int.tryParse(daysController.text) ?? 0,
+//                 ));
+//               });
+//               Navigator.pop(context);
+//             },
+//             child: const Text('Add'),
+//           ),
+//         ],
+//       ),
 //     );
 //   }
 
-//   void _goToProfile() {}
+//   void _addLabDialog() {
+//     final testController = TextEditingController();
+//     Urgency urgency = Urgency.NORMAL;
 
-//   void _onProfileImageChanged(Uint8List bytes) {
-//     setState(() => _profileImageBytes = bytes);
+//     showDialog(
+//       context: context,
+//       builder: (_) => StatefulBuilder(
+//         builder: (context, setDialogState) => AlertDialog(
+//           title: const Text('Order Lab Test'),
+//           content: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               TextField(controller: testController, decoration: const InputDecoration(labelText: 'Test Name')),
+//               const SizedBox(height: 16),
+//               Row(
+//                 children: [
+//                   const Text('Urgency: '),
+//                   Radio<Urgency>(
+//                     value: Urgency.NORMAL,
+//                     groupValue: urgency,
+//                     onChanged: (v) => setDialogState(() => urgency = v!),
+//                   ),
+//                   const Text('Normal'),
+//                   Radio<Urgency>(
+//                     value: Urgency.URGENT,
+//                     groupValue: urgency,
+//                     onChanged: (v) => setDialogState(() => urgency = v!),
+//                   ),
+//                   const Text('Urgent'),
+//                 ],
+//               ),
+//             ],
+//           ),
+//           actions: [
+//             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+//             ElevatedButton(
+//               onPressed: () {
+//                 setState(() {
+//                   _labOrders.add(LabOrder(testName: testController.text, urgency: urgency));
+//                 });
+//                 Navigator.pop(context);
+//               },
+//               child: const Text('Add'),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
 //   }
 
-//   void _addDoctor() {
-//     // TODO: implement add doctor
+//   void _showError(String msg) {
+//     if (!mounted) return;
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: kError));
+//   }
+
+//   void _showSuccess(String msg) {
+//     if (!mounted) return;
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: kSuccess));
 //   }
 
 //   @override
@@ -318,35 +579,139 @@
 //       backgroundColor: kBackground,
 //       body: Row(
 //         children: [
-//           Sidebar(
-//             navItems: _navItems,
-//             selectedIndex: kNavStaff, // Staffs is selected
-//             onItemSelected: _onNavItemSelected,
-//             onLogout: _logout,
-//           ),
-//           Expanded(
+//           Container(
+//             width: 320,
+//             color: kWhite,
 //             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
 //               children: [
-//                 TopBar(
-//                   profileImageBytes: _profileImageBytes,
-//                   onProfileImageChanged: _onProfileImageChanged,
-//                   onLogout: _logout,
-//                   onGoToProfile: _goToProfile,
-//                 ),
-//                 Expanded(
-//                   child: SingleChildScrollView(
-//                     padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-//                     child: _DoctorContent(
-//                       doctors: _doctors,
-//                       selectedTab: _selectedTab,
-//                       onTabSelected: _onStaffTabSelected,
-//                       onAddDoctor: _addDoctor,
-//                     ),
+//                 Container(
+//                   padding: const EdgeInsets.all(20),
+//                   color: kTeal,
+//                   child: Row(
+//                     children: [
+//                       const Icon(Icons.medical_services, color: kWhite, size: 28),
+//                       const SizedBox(width: 12),
+//                       Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text(_doctorName, style: const TextStyle(color: kWhite, fontSize: 16, fontWeight: FontWeight.bold)),
+//                           const Text('Doctor Dashboard', style: TextStyle(color: kWhite, fontSize: 12)),
+//                         ],
+//                       ),
+//                     ],
 //                   ),
 //                 ),
-//                 const Footer(),
+//                 Padding(
+//                   padding: const EdgeInsets.all(16),
+//                   child: Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       Text('Today\'s Queue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kTextDark)),
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+//                         decoration: BoxDecoration(color: kTealLight, borderRadius: BorderRadius.circular(12)),
+//                         child: Text('${_queue.length}', style: const TextStyle(color: kWhite, fontWeight: FontWeight.bold)),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//                 Expanded(
+//                   child: _isLoadingQueue
+//                       ? const Center(child: CircularProgressIndicator(color: kTeal))
+//                       : _queue.isEmpty
+//                           ? Center(child: Text('No patients waiting', style: TextStyle(color: kTextGrey)))
+//                           : ListView.builder(
+//                               itemCount: _queue.length,
+//                               itemBuilder: (_, i) {
+//                                 final p = _queue[i];
+//                                 final isActive = _activePatient?.appointmentId == p.appointmentId;
+//                                 return InkWell(
+//                                   onTap: () => _startConsultation(p),
+//                                   child: Container(
+//                                     margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//                                     padding: const EdgeInsets.all(12),
+//                                     decoration: BoxDecoration(
+//                                       color: isActive ? kTealLight.withOpacity(0.2) : kCardBg,
+//                                       border: Border.all(color: isActive ? kTeal : kBorder, width: isActive ? 2 : 1),
+//                                       borderRadius: BorderRadius.circular(10),
+//                                     ),
+//                                     child: Row(
+//                                       children: [
+//                                         CircleAvatar(
+//                                           radius: 20,
+//                                           backgroundColor: kTealAccent.withOpacity(0.3),
+//                                           backgroundImage: p.patientAvatar != null ? NetworkImage(p.patientAvatar!) : null,
+//                                           child: p.patientAvatar == null ? const Icon(Icons.person, color: kTeal) : null,
+//                                         ),
+//                                         const SizedBox(width: 12),
+//                                         Expanded(
+//                                           child: Column(
+//                                             crossAxisAlignment: CrossAxisAlignment.start,
+//                                             children: [
+//                                               Text(p.patientName, style: const TextStyle(fontWeight: FontWeight.w600)),
+//                                               Text(p.slotTime, style: TextStyle(fontSize: 12, color: kTextGrey)),
+//                                             ],
+//                                           ),
+//                                         ),
+//                                         Column(
+//                                           crossAxisAlignment: CrossAxisAlignment.end,
+//                                           children: [
+//                                             Text(p.waitTime, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kWarning)),
+//                                             const Text('waiting', style: TextStyle(fontSize: 10, color: kTextGrey)),
+//                                           ],
+//                                         ),
+//                                       ],
+//                                     ),
+//                                   ),
+//                                 );
+//                               },
+//                             ),
+//                 ),
 //               ],
 //             ),
+//           ),
+//           Expanded(
+//             child: _activePatient == null
+//                 ? Center(
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         Icon(Icons.person_search, size: 80, color: kTextGrey.withOpacity(0.5)),
+//                         const SizedBox(height: 16),
+//                         Text('Select a patient from the queue to start consultation', style: TextStyle(color: kTextGrey, fontSize: 16)),
+//                       ],
+//                     ),
+//                   )
+//                 : SingleChildScrollView(
+//                     padding: const EdgeInsets.all(24),
+//                     child: _ConsultationPanel(
+//                       patient: _activePatient!,
+//                       history: _patientHistory,
+//                       isLoadingHistory: _isLoadingHistory,
+//                       complaintController: _complaintController,
+//                       findingsController: _findingsController,
+//                       planController: _planController,
+//                       diagnosisController: _diagnosisController,
+//                       hereditary: _hereditary,
+//                       onHereditaryChanged: (v) => setState(() => _hereditary = v),
+//                       tempController: _tempController,
+//                       bpController: _bpController,
+//                       pulseController: _pulseController,
+//                       o2Controller: _o2Controller,
+//                       onSaveVitals: _saveVitals,
+//                       prescriptions: _prescriptions,
+//                       onAddPrescription: _addPrescriptionDialog,
+//                       onRemovePrescription: (i) => setState(() => _prescriptions.removeAt(i)),
+//                       labOrders: _labOrders,
+//                       onAddLab: _addLabDialog,
+//                       onRemoveLab: (i) => setState(() => _labOrders.removeAt(i)),
+//                       onSaveNote: _saveNote,
+//                       onSavePrescription: _savePrescription,
+//                       onSaveLab: _saveLabOrder,
+//                       onComplete: _completeConsultation,
+//                     ),
+//                   ),
 //           ),
 //         ],
 //       ),
@@ -354,18 +719,57 @@
 //   }
 // }
 
-// // ─── DOCTOR CONTENT ─────────────────────────────────────────────────────────
-// class _DoctorContent extends StatelessWidget {
-//   final List<Doctor> doctors;
-//   final StaffCategory selectedTab;
-//   final ValueChanged<StaffCategory> onTabSelected;
-//   final VoidCallback onAddDoctor;
+// class _ConsultationPanel extends StatelessWidget {
+//   final QueuePatient patient;
+//   final PatientSummary? history;
+//   final bool isLoadingHistory;
+//   final TextEditingController complaintController;
+//   final TextEditingController findingsController;
+//   final TextEditingController planController;
+//   final TextEditingController diagnosisController;
+//   final bool hereditary;
+//   final ValueChanged<bool> onHereditaryChanged;
+//   final TextEditingController tempController;
+//   final TextEditingController bpController;
+//   final TextEditingController pulseController;
+//   final TextEditingController o2Controller;
+//   final VoidCallback onSaveVitals;
+//   final List<Prescription> prescriptions;
+//   final VoidCallback onAddPrescription;
+//   final ValueChanged<int> onRemovePrescription;
+//   final List<LabOrder> labOrders;
+//   final VoidCallback onAddLab;
+//   final ValueChanged<int> onRemoveLab;
+//   final VoidCallback onSaveNote;
+//   final VoidCallback onSavePrescription;
+//   final VoidCallback onSaveLab;
+//   final VoidCallback onComplete;
 
-//   const _DoctorContent({
-//     required this.doctors,
-//     required this.selectedTab,
-//     required this.onTabSelected,
-//     required this.onAddDoctor,
+//   const _ConsultationPanel({
+//     required this.patient,
+//     required this.history,
+//     required this.isLoadingHistory,
+//     required this.complaintController,
+//     required this.findingsController,
+//     required this.planController,
+//     required this.diagnosisController,
+//     required this.hereditary,
+//     required this.onHereditaryChanged,
+//     required this.tempController,
+//     required this.bpController,
+//     required this.pulseController,
+//     required this.o2Controller,
+//     required this.onSaveVitals,
+//     required this.prescriptions,
+//     required this.onAddPrescription,
+//     required this.onRemovePrescription,
+//     required this.labOrders,
+//     required this.onAddLab,
+//     required this.onRemoveLab,
+//     required this.onSaveNote,
+//     required this.onSavePrescription,
+//     required this.onSaveLab,
+//     required this.onComplete,
 //   });
 
 //   @override
@@ -373,1139 +777,752 @@
 //     return Column(
 //       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         // Header with title and Add Doctor button
-//         Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: const [
-//                   Text(
-//                     'List of Doctors',
-//                     style: TextStyle(
-//                       fontSize: 28,
-//                       fontWeight: FontWeight.w800,
-//                       color: kTeal,
-//                     ),
-//                   ),
-//                   SizedBox(height: 6),
-//                   Text(
-//                     'View and Manage doctors.',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       color: kTextGrey,
-//                       height: 1.4,
-//                     ),
-//                   ),
-//                 ],
+//         Container(
+//           padding: const EdgeInsets.all(20),
+//           decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
+//           child: Row(
+//             children: [
+//               CircleAvatar(
+//                 radius: 32,
+//                 backgroundColor: kTealAccent.withOpacity(0.3),
+//                 backgroundImage: patient.patientAvatar != null ? NetworkImage(patient.patientAvatar!) : null,
+//                 child: patient.patientAvatar == null ? const Icon(Icons.person, size: 36, color: kTeal) : null,
 //               ),
-//             ),
-//             const SizedBox(width: 16),
-//             _AddDoctorButton(onTap: onAddDoctor),
-//           ],
+//               const SizedBox(width: 16),
+//               Expanded(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(patient.patientName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+//                     Text('Appointment: ${patient.slotTime}', style: TextStyle(color: kTextGrey)),
+//                     Text('Waiting: ${patient.waitTime}', style: TextStyle(color: kWarning, fontWeight: FontWeight.w600)),
+//                   ],
+//                 ),
+//               ),
+//               ElevatedButton.icon(
+//                 onPressed: onComplete,
+//                 icon: const Icon(Icons.check_circle, size: 18),
+//                 label: const Text('Complete Visit'),
+//                 style: ElevatedButton.styleFrom(backgroundColor: kSuccess),
+//               ),
+//             ],
+//           ),
 //         ),
 //         const SizedBox(height: 20),
-//         // Staff category tabs
-//         _StaffTabs(
-//           selectedTab: selectedTab,
-//           onTabSelected: onTabSelected,
+//         if (isLoadingHistory)
+//           const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator(color: kTeal)))
+//         else if (history != null)
+//           _HistoryCard(history: history!),
+//         const SizedBox(height: 20),
+//         _SectionCard(
+//           title: 'Record Vitals',
+//           icon: Icons.favorite,
+//           child: Column(
+//             children: [
+//               Row(
+//                 children: [
+//                   Expanded(child: _VitalField(controller: tempController, label: 'Temperature (°C)', icon: Icons.thermostat)),
+//                   const SizedBox(width: 12),
+//                   Expanded(child: _VitalField(controller: bpController, label: 'Blood Pressure', icon: Icons.monitor_heart)),
+//                 ],
+//               ),
+//               const SizedBox(height: 12),
+//               Row(
+//                 children: [
+//                   Expanded(child: _VitalField(controller: pulseController, label: 'Pulse (bpm)', icon: Icons.favorite)),
+//                   const SizedBox(width: 12),
+//                   Expanded(child: _VitalField(controller: o2Controller, label: 'O2 Saturation (%)', icon: Icons.air)),
+//                 ],
+//               ),
+//               const SizedBox(height: 12),
+//               Align(
+//                 alignment: Alignment.centerRight,
+//                 child: ElevatedButton(onPressed: onSaveVitals, child: const Text('Save Vitals')),
+//               ),
+//             ],
+//           ),
 //         ),
-//         const SizedBox(height: 0), // No gap between tabs and table
-//         // Doctors table
-//         _DoctorsTable(doctors: doctors),
+//         const SizedBox(height: 20),
+//         _SectionCard(
+//           title: 'Clinical Note',
+//           icon: Icons.note_alt,
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               _NoteField(controller: complaintController, label: 'Chief Complaint'),
+//               const SizedBox(height: 12),
+//               _NoteField(controller: findingsController, label: 'Clinical Findings', maxLines: 3),
+//               const SizedBox(height: 12),
+//               _NoteField(controller: diagnosisController, label: 'Diagnosis'),
+//               const SizedBox(height: 12),
+//               _NoteField(controller: planController, label: 'Treatment Plan', maxLines: 3),
+//               const SizedBox(height: 12),
+//               Row(
+//                 children: [
+//                   Checkbox(value: hereditary, onChanged: (v) => onHereditaryChanged(v ?? false)),
+//                   const Text('Hereditary condition'),
+//                 ],
+//               ),
+//               const SizedBox(height: 12),
+//               Align(
+//                 alignment: Alignment.centerRight,
+//                 child: ElevatedButton(onPressed: onSaveNote, child: const Text('Save Note')),
+//               ),
+//             ],
+//           ),
+//         ),
+//         const SizedBox(height: 20),
+//         _SectionCard(
+//           title: 'Prescriptions',
+//           icon: Icons.medication,
+//           action: TextButton.icon(onPressed: onAddPrescription, icon: const Icon(Icons.add, size: 18), label: const Text('Add Drug')),
+//           child: prescriptions.isEmpty
+//               ? Padding(padding: const EdgeInsets.all(16), child: Text('No prescriptions added', style: TextStyle(color: kTextGrey)))
+//               : Column(
+//                   children: [
+//                     ...prescriptions.asMap().entries.map((e) {
+//                       final p = e.value;
+//                       return ListTile(
+//                         title: Text(p.drugName),
+//                         subtitle: Text('${p.dosage} - ${p.frequency} for ${p.durationDays} days'),
+//                         trailing: IconButton(icon: const Icon(Icons.delete, color: kError), onPressed: () => onRemovePrescription(e.key)),
+//                       );
+//                     }),
+//                     const SizedBox(height: 8),
+//                     Align(
+//                       alignment: Alignment.centerRight,
+//                       child: ElevatedButton(onPressed: onSavePrescription, child: const Text('Save Prescriptions')),
+//                     ),
+//                   ],
+//                 ),
+//         ),
+//         const SizedBox(height: 20),
+//         _SectionCard(
+//           title: 'Lab Orders',
+//           icon: Icons.science,
+//           action: TextButton.icon(onPressed: onAddLab, icon: const Icon(Icons.add, size: 18), label: const Text('Add Test')),
+//           child: labOrders.isEmpty
+//               ? Padding(padding: const EdgeInsets.all(16), child: Text('No lab tests ordered', style: TextStyle(color: kTextGrey)))
+//               : Column(
+//                   children: [
+//                     ...labOrders.asMap().entries.map((e) {
+//                       final l = e.value;
+//                       return ListTile(
+//                         title: Text(l.testName),
+//                         trailing: Row(
+//                           mainAxisSize: MainAxisSize.min,
+//                           children: [
+//                             Container(
+//                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+//                               decoration: BoxDecoration(
+//                                 color: l.urgency == Urgency.URGENT ? kUrgent.withOpacity(0.15) : kTeal.withOpacity(0.15),
+//                                 borderRadius: BorderRadius.circular(8),
+//                               ),
+//                               child: Text(
+//                                 l.urgency == Urgency.URGENT ? 'URGENT' : 'Normal',
+//                                 style: TextStyle(fontSize: 11, color: l.urgency == Urgency.URGENT ? kUrgent : kTeal, fontWeight: FontWeight.w600),
+//                               ),
+//                             ),
+//                             IconButton(icon: const Icon(Icons.delete, color: kError), onPressed: () => onRemoveLab(e.key)),
+//                           ],
+//                         ),
+//                       );
+//                     }),
+//                     const SizedBox(height: 8),
+//                     Align(
+//                       alignment: Alignment.centerRight,
+//                       child: ElevatedButton(onPressed: onSaveLab, child: const Text('Place Lab Orders')),
+//                     ),
+//                   ],
+//                 ),
+//         ),
 //       ],
 //     );
 //   }
 // }
 
-// class _AddDoctorButton extends StatelessWidget {
-//   final VoidCallback onTap;
-//   const _AddDoctorButton({required this.onTap});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return InkWell(
-//       onTap: onTap,
-//       borderRadius: BorderRadius.circular(24),
-//       child: Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//         decoration: BoxDecoration(
-//           color: kTeal,
-//           borderRadius: BorderRadius.circular(24),
-//         ),
-//         child: Row(
-//           mainAxisSize: MainAxisSize.min,
-//           children: const [
-//             Icon(Icons.add_rounded, color: kWhite, size: 18),
-//             SizedBox(width: 8),
-//             Text(
-//               'Add Doctor',
-//               style: TextStyle(
-//                 color: kWhite,
-//                 fontSize: 14,
-//                 fontWeight: FontWeight.w600,
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// // Staff category tabs - Doctors, Nurses, Admin Staffs, Lab Techs, Pharmacists
-// class _StaffTabs extends StatelessWidget {
-//   final StaffCategory selectedTab;
-//   final ValueChanged<StaffCategory> onTabSelected;
-
-//   const _StaffTabs({
-//     required this.selectedTab,
-//     required this.onTabSelected,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: kWhite,
-//         border: Border.all(color: kTeal, width: 1),
-//       ),
-//       child: Row(
-//         children: [
-//           _TabItem(
-//             icon: Icons.medical_services_outlined,
-//             label: 'Doctors',
-//             isSelected: selectedTab == StaffCategory.doctors,
-//             onTap: () => onTabSelected(StaffCategory.doctors),
-//           ),
-//           _TabItem(
-//             icon: Icons.local_hospital_outlined,
-//             label: 'Nurses',
-//             isSelected: selectedTab == StaffCategory.nurses,
-//             onTap: () => onTabSelected(StaffCategory.nurses),
-//           ),
-//           _TabItem(
-//             icon: Icons.business_center_outlined,
-//             label: 'Administrative Staffs',
-//             isSelected: selectedTab == StaffCategory.adminStaffs,
-//             onTap: () => onTabSelected(StaffCategory.adminStaffs),
-//             isMultiline: true,
-//           ),
-//           _TabItem(
-//             icon: Icons.science_outlined,
-//             label: 'Lab Technicians',
-//             isSelected: selectedTab == StaffCategory.labTechs,
-//             onTap: () => onTabSelected(StaffCategory.labTechs),
-//             isMultiline: true,
-//           ),
-//           _TabItem(
-//             icon: Icons.local_pharmacy_outlined,
-//             label: 'Pharmacists',
-//             isSelected: selectedTab == StaffCategory.pharmacists,
-//             onTap: () => onTabSelected(StaffCategory.pharmacists),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _TabItem extends StatelessWidget {
+// class _SectionCard extends StatelessWidget {
+//   final String title;
 //   final IconData icon;
-//   final String label;
-//   final bool isSelected;
-//   final VoidCallback onTap;
-//   final bool isMultiline;
+//   final Widget child;
+//   final Widget? action;
 
-//   const _TabItem({
-//     required this.icon,
-//     required this.label,
-//     required this.isSelected,
-//     required this.onTap,
-//     this.isMultiline = false,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Expanded(
-//       child: InkWell(
-//         onTap: onTap,
-//         child: Container(
-//           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-//           decoration: BoxDecoration(
-//             color: isSelected ? kTabSelected : kTabUnselected,
-//             border: Border(
-//               right: BorderSide(color: kTeal, width: 1),
-//             ),
-//           ),
-//           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               Icon(
-//                 icon,
-//                 color: isSelected ? kWhite : kTeal,
-//                 size: 24,
-//               ),
-//               const SizedBox(width: 8),
-//               Flexible(
-//                 child: Text(
-//                   label,
-//                   style: TextStyle(
-//                     fontSize: 14,
-//                     fontWeight: FontWeight.w700,
-//                     color: isSelected ? kWhite : kTeal,
-//                     height: isMultiline ? 1.1 : 1.2,
-//                   ),
-//                   textAlign: TextAlign.center,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class _DoctorsTable extends StatelessWidget {
-//   final List<Doctor> doctors;
-//   const _DoctorsTable({required this.doctors});
+//   const _SectionCard({required this.title, required this.icon, required this.child, this.action});
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return Container(
-//       decoration: BoxDecoration(
-//         color: kWhite,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.04),
-//             blurRadius: 8,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         children: [
-//           // Table header
-//           Container(
-//             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-//             color: kTableHeader,
-//             child: Row(
-//               children: const [
-//                 SizedBox(
-//                   width: 80,
-//                   child: Text(
-//                     'Staff ID',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                 ),
-//                 Expanded(
-//                   flex: 3,
-//                   child: Text(
-//                     'Name',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                 ),
-//                 Expanded(
-//                   flex: 3,
-//                   child: Text(
-//                     'Specialty',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                 ),
-//                 Expanded(
-//                   flex: 2,
-//                   child: Text(
-//                     'Joining Date',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                 ),
-//                 Expanded(
-//                   flex: 2,
-//                   child: Text(
-//                     'Action',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           // Table rows
-//           ...doctors.asMap().entries.map((entry) {
-//             final index = entry.key;
-//             final doctor = entry.value;
-//             return Container(
-//               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//               decoration: BoxDecoration(
-//                 color: index % 2 == 0 ? kWhite : const Color(0xFFF8FCFB),
-//                 border: index < doctors.length - 1
-//                    ? Border(bottom: BorderSide(color: Colors.grey.shade200))
-//                     : null,
-//               ),
-//               child: Row(
-//                 children: [
-//                   SizedBox(
-//                     width: 80,
-//                     child: Text(
-//                       doctor.id,
-//                       style: const TextStyle(fontSize: 13, color: kTextDark),
-//                     ),
-//                   ),
-//                   Expanded(
-//                     flex: 3,
-//                     child: Row(
-//                       children: [
-//                         Container(
-//                           width: 36,
-//                           height: 36,
-//                           decoration: BoxDecoration(
-//                             color: kTealAccent.withOpacity(0.3),
-//                             borderRadius: BorderRadius.circular(4),
-//                           ),
-//                           clipBehavior: Clip.antiAlias,
-//                           child: doctor.avatarUrl!= null && doctor.avatarUrl!.isNotEmpty
-//                              ? Image.network(
-//                                   doctor.avatarUrl!,
-//                                   fit: BoxFit.cover,
-//                                   errorBuilder: (_, __, ___) => const Icon(
-//                                     Icons.person,
-//                                     size: 20,
-//                                     color: kTeal,
-//                                   ),
-//                                 )
-//                               : const Icon(
-//                                   Icons.person,
-//                                   size: 20,
-//                                   color: kTeal,
-//                                 ),
-//                         ),
-//                         const SizedBox(width: 10),
-//                         Text(
-//                           doctor.name,
-//                           style: const TextStyle(
-//                             fontSize: 13,
-//                             color: kTextDark,
-//                             fontWeight: FontWeight.w500,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   Expanded(
-//                     flex: 3,
-//                     child: Text(
-//                       doctor.specialty,
-//                       style: const TextStyle(fontSize: 13, color: kTextDark),
-//                     ),
-//                   ),
-//                   Expanded(
-//                     flex: 2,
-//                     child: Text(
-//                       doctor.joinDate,
-//                       style: const TextStyle(fontSize: 13, color: kTextDark),
-//                     ),
-//                   ),
-//                   Expanded(
-//                     flex: 2,
-//                     child: InkWell(
-//                       onTap: () {
-//                         // TODO: Navigate to doctor details
-//                       },
-//                       child: Row(
-//                         children: const [
-//                           Icon(
-//                             Icons.north_east_rounded,
-//                             size: 14,
-//                             color: kTeal,
-//                           ),
-//                           SizedBox(width: 4),
-//                           Text(
-//                             'View Details',
-//                             style: TextStyle(
-//                               fontSize: 13,
-//                               color: kTeal,
-//                               fontWeight: FontWeight.w600,
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           }),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// // ─── SIDEBAR, TOPBAR, FOOTER ────────────────────────────────────────────────
-// // Reuse the same classes from patient_list_page.dart and billing_page.dart
-
-// class Sidebar extends StatelessWidget {
-//   final List<NavItem> navItems;
-//   final int selectedIndex;
-//   final ValueChanged<int> onItemSelected;
-//   final VoidCallback onLogout;
-
-//   const Sidebar({
-//     super.key,
-//     required this.navItems,
-//     required this.selectedIndex,
-//     required this.onItemSelected,
-//     required this.onLogout,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: 240,
-//       height: double.infinity,
-//       color: kTeal,
+//       padding: const EdgeInsets.all(20),
+//       decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
 //       child: Column(
 //         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
-//           Padding(
-//             padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-//             child: Row(
-//               children: [
-//                 SizedBox(
-//                   width: 38,
-//                   height: 38,
-//                   child: Image.asset(
-//                     'assets/images/Group.png',
-//                     fit: BoxFit.contain,
-//                   ),
-//                 ),
-//                 const SizedBox(width: 10),
-//                 const Text(
-//                   'Heathos',
-//                   style: TextStyle(
-//                     color: kWhite,
-//                     fontSize: 22,
-//                     fontWeight: FontWeight.w700,
-//                     letterSpacing: 0.5,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           // Build nav items with special handling for Staffs selection
-//           ...navItems.map((item) {
-//             final isStaffs = item.index == kNavStaff;
-//             final isSelected = selectedIndex == item.index;
-//             return Container(
-//               color: isSelected ? kWhite : Colors.transparent,
-//               child: SidebarItem(
-//                 icon: item.icon,
-//                 label: item.label,
-//                 isSelected: isSelected,
-//                 isInverted: isSelected, // White bg, teal text for Staffs
-//                 onTap: () => onItemSelected(item.index),
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               Row(
+//                 children: [
+//                   Icon(icon, color: kTeal, size: 22),
+//                   const SizedBox(width: 8),
+//                   Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                 ],
 //               ),
-//             );
-//           }),
-//           const Spacer(),
-//           Padding(
-//             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-//             child: InkWell(
-//               onTap: onLogout,
-//               borderRadius: BorderRadius.circular(10),
-//               child: Padding(
-//                 padding: const EdgeInsets.symmetric(
-//                   horizontal: 12,
-//                   vertical: 10,
-//                 ),
-//                 child: Row(
-//                   children: const [
-//                     Text(
-//                       'Logout',
-//                       style: TextStyle(
-//                         color: kWhite,
-//                         fontSize: 15,
-//                         fontWeight: FontWeight.w600,
-//                       ),
-//                     ),
-//                     SizedBox(width: 8),
-//                     Icon(Icons.arrow_forward_rounded, color: kWhite, size: 18),
-//                   ],
-//                 ),
-//               ),
-//             ),
+//               if (action != null) action!,
+//             ],
 //           ),
+//           const SizedBox(height: 16),
+//           child,
 //         ],
 //       ),
 //     );
 //   }
 // }
 
-// class SidebarItem extends StatefulWidget {
-//   final IconData icon;
+// class _VitalField extends StatelessWidget {
+//   final TextEditingController controller;
 //   final String label;
-//   final bool isSelected;
-//   final bool isInverted; // For white background + teal text
-//   final VoidCallback onTap;
+//   final IconData icon;
 
-//   const SidebarItem({
-//     super.key,
-//     required this.icon,
-//     required this.label,
-//     required this.isSelected,
-//     this.isInverted = false,
-//     required this.onTap,
-//   });
-
-//   @override
-//   State<SidebarItem> createState() => _SidebarItemState();
-// }
-
-// class _SidebarItemState extends State<SidebarItem> {
-//   bool _hovering = false;
+//   const _VitalField({required this.controller, required this.label, required this.icon});
 
 //   @override
 //   Widget build(BuildContext context) {
-//     // Determine colors based on inverted state
-//     final Color textColor = widget.isInverted ? kTeal : kWhite;
-//     final Color iconColor = widget.isInverted ? kTeal : kWhite;
-//     final Color bgColor = widget.isInverted
-//        ? kWhite
-//         : widget.isSelected
-//            ? kWhite.withOpacity(0.20)
-//             : _hovering
-//                ? kWhite.withOpacity(0.10)
-//                 : Colors.transparent;
-
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-//       child: MouseRegion(
-//         onEnter: (_) => setState(() => _hovering = true),
-//         onExit: (_) => setState(() => _hovering = false),
-//         child: InkWell(
-//           onTap: widget.onTap,
-//           borderRadius: BorderRadius.circular(10),
-//           child: AnimatedContainer(
-//             duration: const Duration(milliseconds: 180),
-//             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-//             decoration: BoxDecoration(
-//               color: bgColor,
-//               borderRadius: BorderRadius.circular(10),
-//               border: widget.isSelected &&!widget.isInverted
-//                  ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
-//                   : null,
-//             ),
-//             child: Row(
-//               children: [
-//                 Icon(widget.icon, color: iconColor, size: 20),
-//                 const SizedBox(width: 12),
-//                 Expanded(
-//                   child: Text(
-//                     widget.label,
-//                     style: TextStyle(
-//                       color: textColor,
-//                       fontSize: 14,
-//                       fontWeight: widget.isSelected
-//                          ? FontWeight.w700
-//                           : FontWeight.w500,
-//                     ),
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
+//     return TextField(
+//       controller: controller,
+//       keyboardType: TextInputType.number,
+//       decoration: InputDecoration(
+//         labelText: label,
+//         prefixIcon: Icon(icon, size: 18, color: kTeal),
+//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
 //       ),
 //     );
 //   }
 // }
 
-// // TopBar and Footer are identical to other pages - reuse from patient_list_page.dart
-// class TopBar extends StatefulWidget {
-//   final Uint8List? profileImageBytes;
-//   final ValueChanged<Uint8List> onProfileImageChanged;
-//   final VoidCallback onLogout;
-//   final VoidCallback onGoToProfile;
+// class _NoteField extends StatelessWidget {
+//   final TextEditingController controller;
+//   final String label;
+//   final int maxLines;
 
-//   const TopBar({
-//     super.key,
-//     required this.profileImageBytes,
-//     required this.onProfileImageChanged,
-//     required this.onLogout,
-//     required this.onGoToProfile,
-//   });
-
-//   @override
-//   State<TopBar> createState() => _TopBarState();
-// }
-
-// class _TopBarState extends State<TopBar> {
-//   final _searchController = TextEditingController();
-//   List<SearchResult> _searchResults = [];
-//   bool _isSearching = false;
-//   Timer? _debounce;
-
-//   final LayerLink _layerLink = LayerLink();
-//   OverlayEntry? _overlayEntry;
-//   Timer? _hideTimer;
-//   bool _isHoveringBadge = false;
-//   bool _isHoveringMenu = false;
-
-//   @override
-//   void dispose() {
-//     _searchController.dispose();
-//     _debounce?.cancel();
-//     _hideTimer?.cancel();
-//     _removeOverlay();
-//     super.dispose();
-//   }
-
-//   Future<void> _pickProfileImage() async {
-//     try {
-//       final result = await FilePicker.pickFiles(
-//         type: FileType.image,
-//         withData: true,
-//       );
-//       if (result!= null && result.files.first.bytes!= null) {
-//         widget.onProfileImageChanged(result.files.first.bytes!);
-//       }
-//     } catch (e) {
-//       debugPrint('File pick error: $e');
-//     }
-//   }
-
-//   void _onSearchChanged(String query) {
-//     _debounce?.cancel();
-//     if (query.trim().isEmpty) {
-//       setState(() {
-//         _searchResults = [];
-//         _isSearching = false;
-//       });
-//       return;
-//     }
-//     _debounce = Timer(
-//       const Duration(milliseconds: 400),
-//       () => _runSearch(query.trim()),
-//     );
-//   }
-
-//    Future<void> _runSearch(String query) async {
-//     setState(() => _isSearching = true);
-
-//     final endpoints = {
-//       'Doctor': '$_baseUrl/doctors/search?q=$query',
-//       'Patient': '$_baseUrl/patients/search?q=$query',
-//       'Nurse': '$_baseUrl/nurses/search?q=$query',
-//       'Staff': '$_baseUrl/staff/search?q=$query',
-//     };
-
-//     final results = < SearchResult>[];
-//     final errors = <String>[]; // Track failed endpoints
-
-//     await Future.wait(
-//       endpoints.entries.map((entry) async {
-//         try {
-//           final response = await http
-//               .get(Uri.parse(entry.value))
-//               .timeout(const Duration(seconds: 30));
-
-//           if (response.statusCode == 200) {
-//             final body = jsonDecode(response.body);
-//             final List<dynamic> items = body is List
-//                 ? body
-//                 : (body['data'] as List? ?? []);
-//             for (final item in items) {
-//               results.add(
-//                 SearchResult(
-//                   name:
-//                       item['fullName'] as String? ??
-//                       item['name'] as String? ??
-//                       'Unknown',
-//                   category: entry.key,
-//                   subtitle:
-//                       item['email'] as String? ?? item['id'] as String? ?? '',
-//                 ),
-//               );
-//             }
-//           } else {
-//             // Non-200 response
-//             errors.add('${entry.key}: HTTP ${response.statusCode}');
-//             debugPrint(
-//               'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
-//             );
-//           }
-//         } on TimeoutException {
-//           errors.add('${entry.key}: Request timed out');
-//           debugPrint('Search timeout for ${entry.key}');
-//         } on FormatException catch (e) {
-//           errors.add('${entry.key}: Invalid JSON');
-//           debugPrint('Search JSON error for ${entry.key}: $e');
-//         } catch (e) {
-//           errors.add('${entry.key}: $e');
-//           debugPrint('Search error for ${entry.key}: $e');
-//         }
-//       }),
-//     );
-
-//     if (mounted) {
-//       setState(() {
-//         _searchResults = results;
-//         _isSearching = false;
-//       });
-
-//       // Show error snackbar if any endpoint failed
-//       if (errors.isNotEmpty && context.mounted) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text('Search errors: ${errors.join(', ')}'),
-//             backgroundColor: Colors.orange.shade700,
-//             duration: const Duration(seconds: 4),
-//           ),
-//         );
-//       }
-//     }
-//   }
-
-//   void _showAdminMenu() {
-//     _hideTimer?.cancel();
-//     if (_overlayEntry!= null) return;
-//     _overlayEntry = OverlayEntry(
-//       builder: (_) => Positioned(
-//         width: 150,
-//         child: CompositedTransformFollower(
-//           link: _layerLink,
-//           showWhenUnlinked: false,
-//           offset: const Offset(-40, 38),
-//           child: MouseRegion(
-//             onEnter: (_) {
-//               _isHoveringMenu = true;
-//               _hideTimer?.cancel();
-//             },
-//             onExit: (_) {
-//               _isHoveringMenu = false;
-//               _scheduleHide();
-//             },
-//             child: Material(
-//               elevation: 8,
-//               borderRadius: BorderRadius.circular(10),
-//               child: Container(
-//                 decoration: BoxDecoration(
-//                   color: kWhite,
-//                   borderRadius: BorderRadius.circular(10),
-//                   border: Border.all(color: Colors.grey.shade200),
-//                 ),
-//                 child: Column(
-//                   mainAxisSize: MainAxisSize.min,
-//                   crossAxisAlignment: CrossAxisAlignment.stretch,
-//                   children: [
-//                     TextButton.icon(
-//                       onPressed: () {
-//                         _removeOverlay();
-//                         widget.onGoToProfile();
-//                       },
-//                       icon: const Icon(
-//                         Icons.person_outline_rounded,
-//                         size: 16,
-//                         color: kTeal,
-//                       ),
-//                       label: const Text(
-//                         'Profile',
-//                         style: TextStyle(color: kTextDark, fontSize: 13),
-//                       ),
-//                       style: TextButton.styleFrom(
-//                         alignment: Alignment.centerLeft,
-//                         padding: const EdgeInsets.symmetric(
-//                           horizontal: 14,
-//                           vertical: 10,
-//                         ),
-//                       ),
-//                     ),
-//                                         Divider(height: 1, color: Colors.grey.shade200),
-//                     TextButton.icon(
-//                       onPressed: () {
-//                         _removeOverlay();
-//                         widget.onLogout();
-//                       },
-//                       icon: const Icon(
-//                         Icons.logout_rounded,
-//                         size: 16,
-//                         color: Colors.red,
-//                       ),
-//                       label: const Text(
-//                         'Logout',
-//                         style: TextStyle(color: Colors.red, fontSize: 13),
-//                       ),
-//                       style: TextButton.styleFrom(
-//                         alignment: Alignment.centerLeft,
-//                         padding: const EdgeInsets.symmetric(
-//                           horizontal: 14,
-//                           vertical: 10,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//     Overlay.of(context).insert(_overlayEntry!);
-//   }
-
-//   void _scheduleHide() {
-//     _hideTimer?.cancel();
-//     _hideTimer = Timer(const Duration(milliseconds: 200), () {
-//       if (!_isHoveringBadge &&!_isHoveringMenu) _removeOverlay();
-//     });
-//   }
-
-//   void _removeOverlay() {
-//     _overlayEntry?.remove();
-//     _overlayEntry = null;
-//   }
+//   const _NoteField({required this.controller, required this.label, this.maxLines = 1});
 
 //   @override
 //   Widget build(BuildContext context) {
-//     return Container(
-//       color: kWhite,
-//       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-//       child: Row(
+//     return TextField(
+//       controller: controller,
+//       maxLines: maxLines,
+//       decoration: InputDecoration(
+//         labelText: label,
+//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//         contentPadding: const EdgeInsets.all(12),
+//       ),
+//     );
+//   }
+// }
+
+// class _HistoryCard extends StatelessWidget {
+//   final PatientSummary history;
+//   const _HistoryCard({required this.history});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return _SectionCard(
+//       title: 'Patient History',
+//       icon: Icons.history,
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
-//           const Spacer(),
-//           // Search bar
-//           SizedBox(
-//             width: 260,
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Container(
-//                   height: 40,
-//                   decoration: BoxDecoration(
-//                     border: Border.all(color: kTeal, width: 1.5),
-//                     borderRadius: BorderRadius.circular(20),
-//                   ),
+//           if (history.vitals.isNotEmpty) ...[
+//             const Text('Recent Vitals', style: TextStyle(fontWeight: FontWeight.bold)),
+//             const SizedBox(height: 8),
+//             ...history.vitals.take(3).map((v) => Padding(
+//                   padding: const EdgeInsets.only(bottom: 8),
 //                   child: Row(
 //                     children: [
-//                       const SizedBox(width: 14),
-//                       const Icon(
-//                         Icons.search_rounded,
-//                         color: kTextGrey,
-//                         size: 18,
-//                       ),
+//                       Icon(Icons.circle, size: 8, color: kTeal),
 //                       const SizedBox(width: 8),
-//                       Expanded(
-//                         child: TextField(
-//                           controller: _searchController,
-//                           onChanged: _onSearchChanged,
-//                           decoration: const InputDecoration(
-//                             hintText: 'Search',
-//                             hintStyle: TextStyle(
-//                               color: kTextGrey,
-//                               fontSize: 14,
-//                             ),
-//                             border: InputBorder.none,
-//                             isDense: true,
-//                             contentPadding: EdgeInsets.zero,
-//                           ),
-//                         ),
+//                       Text(
+//                         DateFormat('MMM d, yyyy').format(v.recordedAt),
+//                         style: const TextStyle(fontSize: 12, color: kTextGrey),
 //                       ),
-//                       _isSearching
-//                          ? const SizedBox(
-//                               width: 14,
-//                               height: 14,
-//                               child: CircularProgressIndicator(
-//                                 strokeWidth: 1.5,
-//                                 color: kTeal,
-//                               ),
-//                             )
-//                           : const Icon(
-//                               Icons.mic_rounded,
-//                               color: kTextGrey,
-//                               size: 18,
-//                             ),
-//                       const SizedBox(width: 14),
-//                     ],
-//                   ),
-//                 ),
-//                 // Search results dropdown
-//                 if (_searchResults.isNotEmpty)
-//                   Container(
-//                     constraints: const BoxConstraints(maxHeight: 260),
-//                     margin: const EdgeInsets.only(top: 4),
-//                     decoration: BoxDecoration(
-//                       color: kWhite,
-//                       borderRadius: BorderRadius.circular(10),
-//                       border: Border.all(color: Colors.grey.shade200),
-//                       boxShadow: [
-//                         BoxShadow(
-//                           color: Colors.black.withOpacity(0.08),
-//                           blurRadius: 12,
-//                           offset: const Offset(0, 4),
+//                       const SizedBox(width: 12),
+//                       Text(
+//                         'Temp: ${v.temperature?.toStringAsFixed(1) ?? '-'}°C  BP: ${v.bloodPressure ?? '-'}  Pulse: ${v.pulse ?? '-'}  O2: ${v.o2Saturation ?? '-'}%',
+//                         //TextStyle(fontSize: 12),
 //                         ),
 //                       ],
 //                     ),
-//                     child: ListView.separated(
-//                       shrinkWrap: true,
-//                       padding: const EdgeInsets.symmetric(vertical: 6),
-//                       itemCount: _searchResults.length,
-//                       separatorBuilder: (_, __) =>
-//                           Divider(height: 1, color: Colors.grey.shade100),
-//                       itemBuilder: (_, i) {
-//                         final r = _searchResults[i];
-//                         return ListTile(
-//                           dense: true,
-//                           leading: CircleAvatar(
-//                             radius: 14,
-//                             backgroundColor: kTeal.withOpacity(0.12),
-//                             child: Text(
-//                               r.category[0],
+//                   ),
+//                 ),
+//             const SizedBox(height: 16),
+//           ],
+//           if (history.notes.isNotEmpty) ...[
+//             const Text(
+//               'Last 10 Clinical Notes',
+//               style: TextStyle(fontWeight: FontWeight.bold),
+//             ),
+//             const SizedBox(height: 8),
+//             ...history.notes
+//                 .take(3)
+//                 .map(
+//                   (n) => Container(
+//                     margin: const EdgeInsets.only(bottom: 12),
+//                     padding: const EdgeInsets.all(12),
+//                     decoration: BoxDecoration(
+//                       color: kTealLight.withOpacity(0.1),
+//                       borderRadius: BorderRadius.circular(8),
+//                       border: Border.all(color: kTeal.withOpacity(0.3)),
+//                     ),
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: [
+//                             Text(
+//                               DateFormat('MMM d, yyyy').format(n.createdAt),
 //                               style: const TextStyle(
-//                                 fontSize: 11,
+//                                 fontSize: 12,
+//                                 fontWeight: FontWeight.w600,
 //                                 color: kTeal,
-//                                 fontWeight: FontWeight.w700,
 //                               ),
 //                             ),
-//                           ),
-//                           title: Text(
-//                             r.name,
-//                             style: const TextStyle(
-//                               fontSize: 13,
-//                               color: kTextDark,
+//                             if (n.hereditary)
+//                               Container(
+//                                 padding: const EdgeInsets.symmetric(
+//                                   horizontal: 8,
+//                                   vertical: 2,
+//                                 ),
+//                                 decoration: BoxDecoration(
+//                                   color: kWarning.withOpacity(0.2),
+//                                   borderRadius: BorderRadius.circular(8),
+//                                 ),
+//                                 child: const Text(
+//                                   'Hereditary',
+//                                   style: TextStyle(
+//                                     fontSize: 10,
+//                                     color: kWarning,
+//                                     fontWeight: FontWeight.w600,
+//                                   ),
+//                                 ),
+//                               ),
+//                           ],
+//                         ),
+//                         const SizedBox(height: 8),
+//                         if (n.complaint.isNotEmpty) ...[
+//                           Text(
+//                             'Complaint:',
+//                             style: TextStyle(
+//                               fontSize: 11,
+//                               color: kTextGrey,
 //                               fontWeight: FontWeight.w600,
 //                             ),
 //                           ),
-//                           subtitle: Text(
-//                             '${r.category} · ${r.subtitle}',
-//                             style: const TextStyle(
+//                           Text(
+//                             n.complaint,
+//                             style: const TextStyle(fontSize: 12),
+//                           ),
+//                           const SizedBox(height: 4),
+//                         ],
+//                         if (n.diagnosis.isNotEmpty) ...[
+//                           Text(
+//                             'Diagnosis:',
+//                             style: TextStyle(
 //                               fontSize: 11,
 //                               color: kTextGrey,
+//                               fontWeight: FontWeight.w600,
 //                             ),
 //                           ),
-//                           onTap: () {
-//                             _searchController.clear();
-//                             setState(() => _searchResults = []);
-//                           },
-//                         );
-//                       },
+//                           Text(
+//                             n.diagnosis,
+//                             style: const TextStyle(
+//                               fontSize: 12,
+//                               fontWeight: FontWeight.w500,
+//                             ),
+//                           ),
+//                           const SizedBox(height: 4),
+//                         ],
+//                         if (n.prescriptions.isNotEmpty) ...[
+//                           const SizedBox(height: 4),
+//                           Text(
+//                             'Prescriptions:',
+//                             style: TextStyle(
+//                               fontSize: 11,
+//                               color: kTextGrey,
+//                               fontWeight: FontWeight.w600,
+//                             ),
+//                           ),
+//                           ...n.prescriptions.map(
+//                             (p) => Padding(
+//                               padding: const EdgeInsets.only(left: 8, top: 2),
+//                               child: Text(
+//                                 '• ${p.drugName} ${p.dosage} - ${p.frequency} x ${p.durationDays}d',
+//                                 style: const TextStyle(fontSize: 11),
+//                               ),
+//                             ),
+//                           ),
+//                         ],
+//                         if (n.labOrders.isNotEmpty) ...[
+//                           const SizedBox(height: 4),
+//                           Text(
+//                             'Lab Orders:',
+//                             style: TextStyle(
+//                               fontSize: 11,
+//                               color: kTextGrey,
+//                               fontWeight: FontWeight.w600,
+//                             ),
+//                           ),
+//                           ...n.labOrders.map(
+//                             (l) => Padding(
+//                               padding: const EdgeInsets.only(left: 8, top: 2),
+//                               child: Row(
+//                                 children: [
+//                                   Text(
+//                                     '• ${l.testName}',
+//                                     style: const TextStyle(fontSize: 11),
+//                                   ),
+//                                   if (l.urgency == Urgency.URGENT)
+//                                     Container(
+//                                       margin: const EdgeInsets.only(left: 6),
+//                                       padding: const EdgeInsets.symmetric(
+//                                         horizontal: 6,
+//                                         vertical: 1,
+//                                       ),
+//                                       decoration: BoxDecoration(
+//                                         color: kUrgent.withOpacity(0.2),
+//                                         borderRadius: BorderRadius.circular(4),
+//                                       ),
+//                                       child: const Text(
+//                                         'URGENT',
+//                                         style: TextStyle(
+//                                           fontSize: 9,
+//                                           color: kUrgent,
+//                                           fontWeight: FontWeight.bold,
+//                                         ),
+//                                       ),
+//                                     ),
+//                                 ],
+//                               ),
+//                             ),
+//                           ),
+//                         ],
+//                       ],
 //                     ),
 //                   ),
-//               ],
+//                 ),
+//           ] else
+//             Padding(
+//               padding: const EdgeInsets.all(16),
+//               child: Text(
+//                 'No clinical history available',
+//                 style: TextStyle(color: kTextGrey),
+//               ),
 //             ),
-//           ),
-//           const SizedBox(width: 20),
-//           // Notification bell with badge
-//           Stack(
-//             clipBehavior: Clip.none,
-//             children: [
-//               Container(
-//                 width: 40,
-//                 height: 40,
-//                 decoration: BoxDecoration(
-//                   shape: BoxShape.circle,
-//                   border: Border.all(color: kTeal, width: 1.5),
-//                 ),
-//                 child: const Icon(
-//                   Icons.notifications_rounded,
-//                   color: kTeal,
-//                   size: 20,
-//                 ),
-//               ),
-//               Positioned(
-//                 top: -4,
-//                 right: -2,
-//                 child: Container(
-//                   width: 14,
-//                   height: 14,
-//                   decoration: const BoxDecoration(
-//                     color: Colors.red,
-//                     shape: BoxShape.circle,
-//                   ),
-//                   child: const Center(
-//                     child: Text(
-//                       '3',
-//                       style: TextStyle(
-//                         color: kWhite,
-//                         fontSize: 8,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(width: 16),
-//           // Admin profile with dropdown
-//           Row(
-//             children: [
-//               GestureDetector(
-//                 onTap: _pickProfileImage,
-//                 child: MouseRegion(
-//                   cursor: SystemMouseCursors.click,
-//                   child: Container(
-//                     width: 40,
-//                     height: 40,
-//                     decoration: BoxDecoration(
-//                       color: kTealAccent,
-//                       shape: BoxShape.circle,
-//                       border: Border.all(color: kTeal, width: 1.5),
-//                     ),
-//                     child: ClipOval(
-//                       child: widget.profileImageBytes!= null
-//                          ? Image.memory(
-//                               widget.profileImageBytes!,
-//                               fit: BoxFit.cover,
-//                               width: 40,
-//                               height: 40,
-//                             )
-//                           : const Icon(
-//                               Icons.person_rounded,
-//                               color: kWhite,
-//                               size: 22,
-//                             ),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(width: 10),
-//               Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const Text(
-//                     'Admin_Name',
-//                     style: TextStyle(
-//                       fontSize: 13,
-//                       fontWeight: FontWeight.w700,
-//                       color: kTextDark,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 2),
-//                   CompositedTransformTarget(
-//                     link: _layerLink,
-//                     child: MouseRegion(
-//                       cursor: SystemMouseCursors.click,
-//                       onEnter: (_) {
-//                         _isHoveringBadge = true;
-//                         _hideTimer?.cancel();
-//                         _showAdminMenu();
-//                       },
-//                       onExit: (_) {
-//                         _isHoveringBadge = false;
-//                         _scheduleHide();
-//                       },
-//                       child: GestureDetector(
-//                         onTap: () {
-//                           if (_overlayEntry == null) {
-//                             _showAdminMenu();
-//                           } else {
-//                             _removeOverlay();
-//                           }
-//                         },
-//                         child: Container(
-//                           padding: const EdgeInsets.symmetric(
-//                             horizontal: 6,
-//                             vertical: 2,
-//                           ),
-//                           decoration: BoxDecoration(
-//                             color: kTealLight,
-//                             borderRadius: BorderRadius.circular(4),
-//                           ),
-//                           child: Row(
-//                             mainAxisSize: MainAxisSize.min,
-//                             children: const [
-//                               Text(
-//                                 'ADMIN',
-//                                 style: TextStyle(
-//                                   fontSize: 9,
-//                                   color: kWhite,
-//                                   fontWeight: FontWeight.w700,
-//                                   letterSpacing: 0.8,
-//                                 ),
-//                               ),
-//                               SizedBox(width: 2),
-//                               Icon(
-//                                 Icons.keyboard_arrow_down_rounded,
-//                                 color: kWhite,
-//                                 size: 12,
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ],
-//           ),
 //         ],
 //       ),
 //     );
 //   }
 // }
 
-// // ─── FOOTER ─────────────────────────────────────────────────────────────────
-// class Footer extends StatelessWidget {
-//   const Footer({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(vertical: 12),
-//       color: kBackground,
-//       child: const Center(
-//         child: Text(
-//           'Copyright © A2026.Designed by Group 5',
-//           style: TextStyle(
-//             color: kTeal,
-//             fontSize: 13,
-//             fontWeight: FontWeight.w600,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
+
+
+
+
+
+
+
+
+
+// ===================== IMPORTS =====================
+import 'dart:async';
+import 'dart:convert';
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-class DoctorDashBoard extends StatefulWidget {
-  const DoctorDashBoard({super.key});
+import 'admin_login_page.dart';
 
-  @override
-  State<DoctorDashBoard> createState() => _DoctorDashBoardState();
-}
+// ===================== CONSTANTS =====================
+const kTeal = Color(0xFF0D7B6B);
+const kTealLight = Color(0xFF1A9E8A);
+const kTealAccent = Color(0xFF4FC3B0);
+const kBackground = Color(0xFFF0F4F4);
+const kWhite = Color(0xFFFFFFFF);
+const kTextDark = Color(0xFF1A2E2C);
+const kTextGrey = Color(0xFF7A9490);
+const kCardBg = Color(0xFFFFFFFF);
+const kSuccess = Color(0xFF4CAF50);
+const kWarning = Color(0xFFFF9800);
+const kError = Color(0xFFF44336);
+const kBorder = Color(0xFFE0E0);
+const kUrgent = Color(0xFFFF5252);
 
-class _DoctorDashBoardState extends State<DoctorDashBoard> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold();
+const String _BaseUrl = 'https://heathos-api.onrender.com';
+
+// ===================== MODELS =====================
+enum Urgency { NORMAL, URGENT }
+
+class QueuePatient {
+  final String appointmentId;
+  final String patientId;
+  final String patientName;
+  final String? patientAvatar;
+  final String slotTime;
+  final DateTime checkInTime;
+
+  const QueuePatient({
+    required this.appointmentId,
+    required this.patientId,
+    required this.patientName,
+    this.patientAvatar,
+    required this.slotTime,
+    required this.checkInTime,
+  });
+
+  factory QueuePatient.fromJson(Map<String, dynamic> json) => QueuePatient(
+    appointmentId: json['id'] ?? '',
+    patientId: json['patientId'] ?? '',
+    patientName: json['patientName'] ?? 'Unknown',
+    patientAvatar: json['patientAvatar'],
+    slotTime: json['slotDatetime'] ?? '',
+    checkInTime: DateTime.tryParse(json['checkInTime'] ?? '') ?? DateTime.now(),
+  );
+
+  String get waitTime {
+    final diff = DateTime.now().difference(checkInTime);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    return '${diff.inHours}h ${diff.inMinutes % 60}m';
   }
 }
 
+// ===================== DASHBOARD =====================
+class DoctorDashboard extends StatefulWidget {
+  const DoctorDashboard({super.key});
 
+  @override
+  State<DoctorDashboard> createState() => _DoctorDashboardState();
+}
+
+class _DoctorDashboardState extends State<DoctorDashboard> {
+  List<QueuePatient> _queue = [];
+  bool _isLoadingQueue = true;
+
+  String _doctorId = '';
+  String _doctorName = 'Doctor';
+
+  Timer? _pollTimer;
+  late IO.Socket socket;
+
+  // ===================== INIT =====================
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctorInfo();
+    _fetchQueue();
+    _startPolling(); // fallback
+    _initSocket(); // REAL-TIME
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    socket.dispose();
+    super.dispose();
+  }
+
+  // ===================== LOAD USER =====================
+  void _loadDoctorInfo() {
+    _doctorId = html.window.localStorage['userId'] ?? '';
+    _doctorName = html.window.localStorage['fullName'] ?? 'Doctor';
+  }
+
+  // ===================== LOGOUT =====================
+  void _logout() {
+    html.window.localStorage.clear();
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const AdminLoginPage()),
+      (route) => false,
+    );
+  }
+
+  // ===================== SOCKET =====================
+  void _initSocket() {
+    socket = IO.io(
+      _BaseUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .build(),
+    );
+
+    socket.connect();
+
+    socket.onConnect((_) {
+      socket.emit('join_doctor', _doctorId);
+    });
+
+    socket.on('new_appointment', (data) {
+      final newPatient = QueuePatient.fromJson(data);
+
+      setState(() {
+        _queue = [
+          newPatient,
+          ..._queue.where((p) => p.appointmentId != newPatient.appointmentId),
+        ];
+      });
+
+      _showSuccess('New patient added');
+    });
+  }
+
+  // ===================== POLLING (BACKUP) =====================
+  void _startPolling() {
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => _fetchQueue(),
+    );
+  }
+
+  // ===================== FETCH QUEUE =====================
+  Future<void> _fetchQueue() async {
+    try {
+      final token = html.window.localStorage['token'];
+      if (token == null) {
+        _logout();
+        return;
+      }
+
+      final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      final res = await http.get(
+        Uri.parse(
+          '$_BaseUrl/api/appointments/queue?doctor_id=$_doctorId&date=$date',
+        ),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+
+        setState(() {
+          _queue = (body['data'] as List)
+              .map((e) => QueuePatient.fromJson(e))
+              .toList();
+          _isLoadingQueue = false;
+        });
+      } else if (res.statusCode == 401) {
+        _logout();
+      }
+    } catch (e) {
+      _showError('Network error');
+    }
+  }
+
+  // ===================== UI HELPERS =====================
+  void _showError(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: kError));
+  }
+
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: kSuccess));
+  }
+
+  // ===================== UI =====================
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBackground,
+      body: Row(
+        children: [
+          // ===================== SIDEBAR =====================
+          Container(
+            width: 300,
+            color: kWhite,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  color: kTeal,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.medical_services, color: kWhite),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _doctorName,
+                              style: const TextStyle(
+                                color: kWhite,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.logout, color: kWhite),
+                            onPressed: _logout,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Online", style: TextStyle(color: kWhite)),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: kWhite),
+                            onPressed: _fetchQueue,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ===================== QUEUE =====================
+                Expanded(
+                  child: _isLoadingQueue
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: _queue.length,
+                          itemBuilder: (_, i) {
+                            final p = _queue[i];
+
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.person),
+                              ),
+                              title: Text(p.patientName),
+                              subtitle: Text(p.slotTime),
+                              trailing: Text(p.waitTime),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+
+          // ===================== MAIN =====================
+          Expanded(
+            child: Center(
+              child: Text(
+                "Select patient to begin consultation",
+                style: TextStyle(color: kTextGrey),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

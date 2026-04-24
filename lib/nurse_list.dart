@@ -93,34 +93,34 @@ class _NurseListState extends State<NurseList> {
   StaffCategory _selectedTab = StaffCategory.nurses; // Nurses tab is selected
 
   // Sidebar nav items - Staffs highlighted since we're in staff section
-  // final List<NavItem> _navItems = [
-  //   NavItem(
-  //     icon: Icons.dashboard_rounded,
-  //     label: 'Overview',
-  //     index: kNavOverview,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.personal_injury_rounded,
-  //     label: 'Patient',
-  //     index: kNavPatient,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.event_note_rounded,
-  //     label: 'Appointment',
-  //     index: kNavAppointment,
-  //   ),
-  //   NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
-  //   NavItem(
-  //     icon: Icons.inventory_2_rounded,
-  //     label: 'Inventory',
-  //     index: kNavInventory,
-  //   ),
-  //   NavItem(
-  //     icon: Icons.receipt_long_rounded,
-  //     label: 'Billings',
-  //     index: kNavBillings,
-  //   ),
-  // ];
+  final List<NavItem> _navItems = [
+    NavItem(
+      icon: Icons.dashboard_rounded,
+      label: 'Overview',
+      index: kNavOverview,
+    ),
+    NavItem(
+      icon: Icons.personal_injury_rounded,
+      label: 'Patient',
+      index: kNavPatient,
+    ),
+    NavItem(
+      icon: Icons.event_note_rounded,
+      label: 'Appointment',
+      index: kNavAppointment,
+    ),
+    NavItem(icon: Icons.groups_rounded, label: 'Staffs', index: kNavStaff),
+    NavItem(
+      icon: Icons.inventory_2_rounded,
+      label: 'Inventory',
+      index: kNavInventory,
+    ),
+    NavItem(
+      icon: Icons.receipt_long_rounded,
+      label: 'Billings',
+      index: kNavBillings,
+    ),
+  ];
 
   // Mock data matching your screenshot
   final List<Nurse> _nurses = [
@@ -225,41 +225,41 @@ class _NurseListState extends State<NurseList> {
   ];
 
   // Handle sidebar navigation
-  // void _onNavItemSelected(int index) {
-  //   if (index == kNavStaff) return; // Already in staff section
-  //   switch (index) {
-  //     case kNavOverview:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const AdminDashboard()),
-  //       );
-  //       break;
-  //     case kNavPatient:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => const PatientListPage()),
-  //       );
-  //       break;
-  //     case kNavAppointment:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => AppointmentPage()),
-  //       );
-  //       break;
-  //     case kNavInventory:
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (_) => InventoryPage()),
-  //       );
-  //       break;
-  //     // case kNavBillings:
-  //     //   Navigator.pushReplacement(
-  //     //     context,
-  //     //     MaterialPageRoute(builder: (_) => const BillingPage()),
-  //     //   );
-  //     //   break;
-  //   }
-  // }
+  void _onNavItemSelected(int index) {
+    if (index == kNavStaff) return; // Already in staff section
+    switch (index) {
+      case kNavOverview:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+        break;
+      case kNavPatient:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => PatientListPage()),
+        );
+        break;
+      case kNavAppointment:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => AppointmentPage()),
+        );
+        break;
+      case kNavInventory:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => InventoryPage()),
+        );
+        break;
+      // case kNavBillings:
+      //   Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(builder: (_) => const BillingPage()),
+      //   );
+      //   break;
+    }
+  }
 
   // Handle staff category tab clicks - navigates to respective pages
   void _onStaffTabSelected(StaffCategory category) {
@@ -319,12 +319,12 @@ class _NurseListState extends State<NurseList> {
       backgroundColor: kBackground,
       body: Row(
         children: [
-          // Sidebar(
-          //   navItems: _navItems,
-          //   selectedIndex: kNavStaff, // Staffs highlighted in sidebar
-          //   onItemSelected: _onNavItemSelected,
-          //   onLogout: _logout,
-          // ),
+          Sidebar(
+            navItems: _navItems,
+            selectedIndex: kNavStaff, // Staffs highlighted in sidebar
+            onItemSelected: _onNavItemSelected,
+            onLogout: _logout,
+          ),
           Expanded(
             child: Column(
               children: [
@@ -529,13 +529,13 @@ class _TabItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
-            color: isSelected ? kTabSelected : kTabUnselected,
+            color: isSelected? kTabSelected : kTabUnselected,
             border: Border(right: BorderSide(color: kTeal, width: 1)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? kWhite : kTeal, size: 24),
+              Icon(icon, color: isSelected? kWhite : kTeal, size: 24),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -543,8 +543,8 @@ class _TabItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isSelected ? kWhite : kTeal,
-                    height: isMultiline ? 1.1 : 1.2,
+                    color: isSelected? kWhite : kTeal,
+                    height: isMultiline? 1.1 : 1.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -641,15 +641,15 @@ class _NursesTable extends StatelessWidget {
             ),
           ),
           // Table rows with alternating colors
-          ...nurses.asMap().entries.map((entry) {
+         ...nurses.asMap().entries.map((entry) {
             final index = entry.key;
             final nurse = entry.value;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: index % 2 == 0 ? kWhite : const Color(0xFFF8FCFB),
+                color: index % 2 == 0? kWhite : const Color(0xFFF8FCFB),
                 border: index < nurses.length - 1
-                    ? Border(bottom: BorderSide(color: Colors.grey.shade200))
+                   ? Border(bottom: BorderSide(color: Colors.grey.shade200))
                     : null,
               ),
               child: Row(
@@ -674,9 +674,9 @@ class _NursesTable extends StatelessWidget {
                           ),
                           clipBehavior: Clip.antiAlias,
                           child:
-                              nurse.avatarUrl != null &&
+                              nurse.avatarUrl!= null &&
                                   nurse.avatarUrl!.isNotEmpty
-                              ? Image.network(
+                             ? Image.network(
                                   nurse.avatarUrl!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const Icon(
@@ -805,11 +805,11 @@ class Sidebar extends StatelessWidget {
             ),
           ),
           // Build nav items with special handling for Staffs selection
-          ...navItems.map((item) {
+         ...navItems.map((item) {
             final isStaffs = item.index == kNavStaff;
             final isSelected = selectedIndex == item.index;
             return Container(
-              color: isSelected ? kWhite : Colors.transparent,
+              color: isSelected? kWhite : Colors.transparent,
               child: SidebarItem(
                 icon: item.icon,
                 label: item.label,
@@ -879,14 +879,14 @@ class _SidebarItemState extends State<SidebarItem> {
   @override
   Widget build(BuildContext context) {
     // Determine colors based on inverted state
-    final Color textColor = widget.isInverted ? kTeal : kWhite;
-    final Color iconColor = widget.isInverted ? kTeal : kWhite;
+    final Color textColor = widget.isInverted? kTeal : kWhite;
+    final Color iconColor = widget.isInverted? kTeal : kWhite;
     final Color bgColor = widget.isInverted
-        ? kWhite
+       ? kWhite
         : widget.isSelected
-        ? kWhite.withOpacity(0.20)
+       ? kWhite.withOpacity(0.20)
         : _hovering
-        ? kWhite.withOpacity(0.10)
+       ? kWhite.withOpacity(0.10)
         : Colors.transparent;
 
     return Padding(
@@ -903,8 +903,8 @@ class _SidebarItemState extends State<SidebarItem> {
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(10),
-              border: widget.isSelected && !widget.isInverted
-                  ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
+              border: widget.isSelected &&!widget.isInverted
+                 ? Border.all(color: kWhite.withOpacity(0.3), width: 1)
                   : null,
             ),
             child: Row(
@@ -918,7 +918,7 @@ class _SidebarItemState extends State<SidebarItem> {
                       color: textColor,
                       fontSize: 14,
                       fontWeight: widget.isSelected
-                          ? FontWeight.w700
+                         ? FontWeight.w700
                           : FontWeight.w500,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -1013,7 +1013,7 @@ class _TopBarState extends State<TopBar> {
     };
 
     final results = <SearchResult>[];
-    final errors = <String>[];
+    final errors = <String>[]; // Track failed endpoints
 
     await Future.wait(
       endpoints.entries.map((entry) async {
@@ -1041,6 +1041,7 @@ class _TopBarState extends State<TopBar> {
               );
             }
           } else {
+            // Non-200 response
             errors.add('${entry.key}: HTTP ${response.statusCode}');
             debugPrint(
               'Search failed for ${entry.key}: ${response.statusCode} ${response.body}',
@@ -1065,6 +1066,7 @@ class _TopBarState extends State<TopBar> {
         _isSearching = false;
       });
 
+      // Show error snackbar if any endpoint failed
       if (errors.isNotEmpty && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1185,7 +1187,6 @@ class _TopBarState extends State<TopBar> {
       child: Row(
         children: [
           const Spacer(),
-          // Search bar
           SizedBox(
             width: 260,
             child: Column(
@@ -1241,7 +1242,6 @@ class _TopBarState extends State<TopBar> {
                     ],
                   ),
                 ),
-                // Search results dropdown
                 if (_searchResults.isNotEmpty)
                   Container(
                     constraints: const BoxConstraints(maxHeight: 260),
@@ -1307,7 +1307,6 @@ class _TopBarState extends State<TopBar> {
             ),
           ),
           const SizedBox(width: 20),
-          // Notification bell with badge
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -1349,7 +1348,6 @@ class _TopBarState extends State<TopBar> {
             ],
           ),
           const SizedBox(width: 16),
-          // Admin profile with dropdown
           Row(
             children: [
               GestureDetector(

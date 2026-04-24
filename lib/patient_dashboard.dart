@@ -51,16 +51,16 @@
 
 //   // Hide Add button for admin
 //   bool get _canAddPatient =>
-//       _userRole.toUpperCase() == 'RECEPTIONIST' &&!widget.isAdminView;
+//       _userRole.toUpperCase() == 'RECEPTIONIST' && !widget.isAdminView;
 
 //   List get _filteredPatients {
 //     if (_searchQuery.trim().isEmpty) return patients;
 //     final q = _searchQuery.toLowerCase();
 //     return patients.where((p) {
-//       return (p['fullName']?? '').toLowerCase().contains(q) ||
-//           (p['phone']?? '').toLowerCase().contains(q) ||
-//           (p['email']?? '').toLowerCase().contains(q) ||
-//           (p['id']?? '').toString().contains(q);
+//       return (p['fullName'] ?? '').toLowerCase().contains(q) ||
+//           (p['phone'] ?? '').toLowerCase().contains(q) ||
+//           (p['email'] ?? '').toLowerCase().contains(q) ||
+//           (p['id'] ?? '').toString().contains(q);
 //     }).toList();
 //   }
 
@@ -72,7 +72,7 @@
 //   }
 
 //   void _loadUserRole() {
-//     _userRole = html.window.localStorage['role']?? 'RECEPTIONIST';
+//     _userRole = html.window.localStorage['role'] ?? 'RECEPTIONIST';
 //   }
 
 //   void _logout() {
@@ -90,7 +90,7 @@
 //     setState(() => isLoading = true);
 
 //     try {
-//       final token = html.window.localStorage['token']?? '';
+//       final token = html.window.localStorage['token'] ?? '';
 
 //       if (token.isEmpty) {
 //         showError('No token found. Please log in again.');
@@ -99,7 +99,7 @@
 //       }
 
 //       final response = await http.get(
-//         Uri.parse('$_BaseUrl/api/patients'),
+//         Uri.parse('$_BaseUrl/api/patients/'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //           'Authorization': 'Bearer $token',
@@ -124,12 +124,17 @@
 
 //       // FIX 2: Only decode if body exists and looks like JSON
 //       if (response.body.isEmpty) {
-//         showError('Server returned empty response. Status: ${response.statusCode}');
+//         showError(
+//           'Server returned empty response. Status: ${response.statusCode}',
+//         );
 //         return;
 //       }
 
-//       if (!response.body.trim().startsWith('{') &&!response.body.trim().startsWith('[')) {
-//         showError('Server returned HTML/text instead of JSON. Backend may be down.');
+//       if (!response.body.trim().startsWith('{') &&
+//           !response.body.trim().startsWith('[')) {
+//         showError(
+//           'Server returned HTML/text instead of JSON. Backend may be down.',
+//         );
 //         return;
 //       }
 
@@ -138,10 +143,10 @@
 //       if (response.statusCode == 200 && data['success'] == true) {
 //         if (!mounted) return;
 //         setState(() {
-//           patients = data['data'] is List? data['data'] : [];
+//           patients = data['data'] is List ? data['data'] : [];
 //         });
 //       } else {
-//         showError(data['message']?? 'Failed to fetch patients');
+//         showError(data['message'] ?? 'Failed to fetch patients');
 //       }
 //     } catch (e) {
 //       if (e is FormatException) {
@@ -158,7 +163,7 @@
 //   // ───────── DELETE - BULLETPROOF VERSION ─────────
 //   Future<void> deletePatient(String id) async {
 //     try {
-//       final token = html.window.localStorage['token']?? '';
+//       final token = html.window.localStorage['token'] ?? '';
 
 //       final response = await http.delete(
 //         Uri.parse('$_BaseUrl/api/patients/$id'),
@@ -188,7 +193,7 @@
 //         ).showSnackBar(const SnackBar(content: Text('Patient deleted')));
 //         fetchPatients();
 //       } else {
-//         showError(data['message']?? 'Delete failed');
+//         showError(data['message'] ?? 'Delete failed');
 //       }
 //     } catch (e) {
 //       if (e is FormatException) {
@@ -202,7 +207,7 @@
 //   // ───────── UPDATE - BULLETPROOF VERSION ─────────
 //   Future<void> updatePatient(String id, Map body) async {
 //     try {
-//       final token = html.window.localStorage['token']?? '';
+//       final token = html.window.localStorage['token'] ?? '';
 
 //       final response = await http.put(
 //         Uri.parse('$_BaseUrl/api/patients/$id'),
@@ -222,7 +227,7 @@
 //         if (response.body.isNotEmpty) {
 //           try {
 //             final data = jsonDecode(response.body);
-//             errorMsg = data['message']?? errorMsg;
+//             errorMsg = data['message'] ?? errorMsg;
 //           } catch (_) {}
 //         }
 //         if (response.statusCode == 401) {
@@ -323,13 +328,17 @@
 //     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
 //   }
 
-//   // Navigate to registration and refresh on return
+//     // Navigate to registration and refresh on return
 //   Future<void> _navigateToAddPatient() async {
-//     await Navigator.push(
+//     final result = await Navigator.push(
 //       context,
 //       MaterialPageRoute(builder: (_) => const PatientRegistrationPage()),
 //     );
-//     fetchPatients(); // Refresh list after returning
+
+//     // ✅ Only refresh if a patient was actually saved
+//     if (result == true) {
+//       await fetchPatients();
+//     }
 //   }
 
 //   // ───────── UI ─────────
@@ -426,7 +435,7 @@
 //                               ),
 //                             ),
 //                           ),
-//                           if (_canAddPatient)...[
+//                           if (_canAddPatient) ...[
 //                             const SizedBox(width: 12),
 //                             ElevatedButton.icon(
 //                               onPressed: _navigateToAddPatient,
@@ -455,7 +464,7 @@
 //                   // Table
 //                   Expanded(
 //                     child: isLoading
-//                        ? const Center(
+//                         ? const Center(
 //                             child: CircularProgressIndicator(color: teal),
 //                           )
 //                         : Container(
@@ -547,7 +556,7 @@
 //                                 // Table Body
 //                                 Expanded(
 //                                   child: patients.isEmpty
-//                                      ? const Center(
+//                                       ? const Center(
 //                                           child: Padding(
 //                                             padding: EdgeInsets.all(32.0),
 //                                             child: Text(
@@ -560,7 +569,7 @@
 //                                           ),
 //                                         )
 //                                       : _filteredPatients.isEmpty
-//                                      ? const Center(
+//                                       ? const Center(
 //                                           child: Padding(
 //                                             padding: EdgeInsets.all(32.0),
 //                                             child: Text(
@@ -591,7 +600,7 @@
 //                                                   Expanded(
 //                                                     flex: 1,
 //                                                     child: Text(
-//                                                       '${p['id']?? i + 1}',
+//                                                       '${p['id'] ?? i + 1}',
 //                                                     ),
 //                                                   ),
 //                                                   Expanded(
@@ -612,7 +621,7 @@
 //                                                           width: 12,
 //                                                         ),
 //                                                         Text(
-//                                                           p['fullName']??
+//                                                           p['fullName'] ??
 //                                                               'N/A',
 //                                                         ),
 //                                                       ],
@@ -621,19 +630,19 @@
 //                                                   Expanded(
 //                                                     flex: 2,
 //                                                     child: Text(
-//                                                       p['gender']?? 'N/A',
+//                                                       p['gender'] ?? 'N/A',
 //                                                     ),
 //                                                   ),
 //                                                   Expanded(
 //                                                     flex: 2,
 //                                                     child: Text(
-//                                                       p['phone']?? '',
+//                                                       p['phone'] ?? '',
 //                                                     ),
 //                                                   ),
 //                                                   Expanded(
 //                                                     flex: 2,
 //                                                     child: Text(
-//                                                       p['address']?? 'N/A',
+//                                                       p['address'] ?? 'N/A',
 //                                                     ),
 //                                                   ),
 //                                                   Expanded(
@@ -641,7 +650,7 @@
 //                                                     child: Row(
 //                                                       mainAxisAlignment:
 //                                                           MainAxisAlignment
-//                                                              .center,
+//                                                               .center,
 //                                                       children: [
 //                                                         IconButton(
 //                                                           icon: const Icon(
@@ -662,14 +671,14 @@
 //                                                         IconButton(
 //                                                           icon: const Icon(
 //                                                             Icons
-//                                                                .delete_outline,
+//                                                                 .delete_outline,
 //                                                             color: Colors.red,
 //                                                             size: 20,
 //                                                           ),
 //                                                           onPressed: () =>
 //                                                               confirmDelete(
 //                                                                 p['id']
-//                                                                    .toString(),
+//                                                                     .toString(),
 //                                                               ),
 //                                                           padding:
 //                                                               EdgeInsets.zero,
@@ -784,11 +793,11 @@
 //         );
 //         break;
 //       // case _kNavBillings:
-//       //   Navigator.pushReplacement(
-//       //     context,
-//       //     MaterialPageRoute(builder: (_) => const BillingPage()),
-//       //   );
-//       //   break;
+//       // Navigator.pushReplacement(
+//       // context,
+//       // MaterialPageRoute(builder: (_) => const BillingPage()),
+//       // );
+//       // break;
 //     }
 //   }
 
@@ -926,13 +935,13 @@
 //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
 //             decoration: BoxDecoration(
 //               color: widget.isSelected
-//                  ? _kWhite.withOpacity(0.20)
+//                   ? _kWhite.withOpacity(0.20)
 //                   : _hovering
-//                  ? _kWhite.withOpacity(0.10)
+//                   ? _kWhite.withOpacity(0.10)
 //                   : Colors.transparent,
 //               borderRadius: BorderRadius.circular(10),
 //               border: widget.isSelected
-//                  ? Border.all(color: _kWhite.withOpacity(0.3), width: 1)
+//                   ? Border.all(color: _kWhite.withOpacity(0.3), width: 1)
 //                   : null,
 //             ),
 //             child: Row(
@@ -946,7 +955,7 @@
 //                       color: _kWhite,
 //                       fontSize: 14,
 //                       fontWeight: widget.isSelected
-//                          ? FontWeight.w700
+//                           ? FontWeight.w700
 //                           : FontWeight.w500,
 //                     ),
 //                     overflow: TextOverflow.ellipsis,
@@ -995,11 +1004,11 @@
 //   }
 
 //   void _loadUserInfo() {
-//     final role = html.window.localStorage['role']?? 'ADMIN';
+//     final role = html.window.localStorage['role'] ?? 'ADMIN';
 //     final name =
-//         html.window.localStorage['userName']??
-//         html.window.localStorage['fullName']??
-//         html.window.localStorage['email']??
+//         html.window.localStorage['userName'] ??
+//         html.window.localStorage['fullName'] ??
+//         html.window.localStorage['email'] ??
 //         'User';
 //     setState(() {
 //       _userRole = _formatRole(role);
@@ -1024,7 +1033,7 @@
 //         type: FileType.image,
 //         withData: true,
 //       );
-//       if (result!= null && result.files.first.bytes!= null) {
+//       if (result != null && result.files.first.bytes != null) {
 //         widget.onProfileImageChanged(result.files.first.bytes!);
 //       }
 //     } catch (e) {
@@ -1085,17 +1094,17 @@
 //             children: [
 //               // Avatar + dropdown
 //               GestureDetector(
-//                 onTap: () => setState(() => _showMenu =!_showMenu),
+//                 onTap: () => setState(() => _showMenu = !_showMenu),
 //                 child: Stack(
 //                   children: [
 //                     CircleAvatar(
 //                       radius: 18,
 //                       backgroundColor: _tealLight,
-//                       backgroundImage: widget.profileImageBytes!= null
-//                          ? MemoryImage(widget.profileImageBytes!)
+//                       backgroundImage: widget.profileImageBytes != null
+//                           ? MemoryImage(widget.profileImageBytes!)
 //                           : null,
 //                       child: widget.profileImageBytes == null
-//                          ? const Icon(Icons.person, color: _teal, size: 20)
+//                           ? const Icon(Icons.person, color: _teal, size: 20)
 //                           : null,
 //                     ),
 //                     Positioned(
@@ -1122,21 +1131,21 @@
 
 //               const SizedBox(width: 10),
 
-//               // Name
+//               // CHANGED: Role text - now shows role in small text
 //               Text(
-//                 _userName,
+//                 _userRole,
 //                 style: const TextStyle(
-//                   fontSize: 14,
-//                   fontWeight: FontWeight.w600,
-//                   color: Color(0xFF0D2B27),
+//                   fontSize: 13,
+//                   fontWeight: FontWeight.w500,
+//                   color: Color(0xFF607C79),
 //                 ),
 //               ),
 //               const SizedBox(width: 8),
 
-//               // Role badge
+//               // CHANGED: Name badge - Now shows userName instead of role
 //               Container(
 //                 padding: const EdgeInsets.symmetric(
-//                   horizontal: 10,
+//                   horizontal: 12,
 //                   vertical: 4,
 //                 ),
 //                 decoration: BoxDecoration(
@@ -1144,7 +1153,7 @@
 //                   borderRadius: BorderRadius.circular(20),
 //                 ),
 //                 child: Text(
-//                   _userRole,
+//                   _userName,
 //                   style: const TextStyle(
 //                     fontSize: 12,
 //                     fontWeight: FontWeight.w600,
@@ -1232,7 +1241,7 @@ import 'billing_page.dart';
 
 const String _BaseUrl = 'https://heathos-api.onrender.com';
 
-// ADDED: Constants needed for sidebar - copied from admin_dashboard.dart
+// Constants needed for sidebar - copied from admin_dashboard.dart
 const _kTeal = Color(0xFF0D7B6B);
 const _kTealLight = Color(0xFF1A9E8A);
 const _kTealDark = Color(0xFF095F54);
@@ -1241,7 +1250,7 @@ const _kWhite = Color(0xFFFFFFFF);
 const _kTextDark = Color(0xFF1A2E2C);
 const _kTextGrey = Color(0xFF7A9490);
 
-// ADDED: Nav index constants for sidebar
+// Nav index constants for sidebar
 const int _kNavOverview = 0;
 const int _kNavPatient = 1;
 const int _kNavAppointment = 2;
@@ -1299,6 +1308,26 @@ class _PatientListPageState extends State<PatientListPage> {
     );
   }
 
+  // ADDED: Navigate to appointment booking - receptionist only
+  void _goToAppointmentBooking(Map patient) {
+    if (_userRole.toUpperCase() != 'RECEPTIONIST') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Only receptionists can book appointments'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AppointmentPage(preselectedPatient: patient),
+      ),
+    );
+  }
+
   // ───────── FETCH - BULLETPROOF VERSION ─────────
   Future<void> fetchPatients() async {
     if (!mounted) return;
@@ -1321,11 +1350,9 @@ class _PatientListPageState extends State<PatientListPage> {
         },
       );
 
-      // DEBUG: Print what we actually got
       debugPrint('Status: ${response.statusCode}');
       debugPrint('Body: ${response.body}');
 
-      // FIX 1: Check status BEFORE decoding
       if (response.statusCode == 401) {
         showError('Session expired. Please log in again.');
         _logout();
@@ -1337,7 +1364,6 @@ class _PatientListPageState extends State<PatientListPage> {
         return;
       }
 
-      // FIX 2: Only decode if body exists and looks like JSON
       if (response.body.isEmpty) {
         showError(
           'Server returned empty response. Status: ${response.statusCode}',
@@ -1543,14 +1569,14 @@ class _PatientListPageState extends State<PatientListPage> {
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
-    // Navigate to registration and refresh on return
+  // Navigate to registration and refresh on return
   Future<void> _navigateToAddPatient() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PatientRegistrationPage()),
     );
 
-    // ✅ Only refresh if a patient was actually saved
+    // Only refresh if a patient was actually saved
     if (result == true) {
       await fetchPatients();
     }
@@ -1561,6 +1587,7 @@ class _PatientListPageState extends State<PatientListPage> {
   Widget build(BuildContext context) {
     const teal = Color(0xFF0E8A73);
     const lightTeal = Color(0xFFE6F5F2);
+    final isReceptionist = _userRole.toUpperCase() == 'RECEPTIONIST';
 
     Widget mainContent = Scaffold(
       backgroundColor: Colors.white,
@@ -1804,106 +1831,143 @@ class _PatientListPageState extends State<PatientListPage> {
                                           ),
                                           itemBuilder: (context, i) {
                                             final p = _filteredPatients[i];
-                                            return Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 12,
-                                                  ),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: Text(
-                                                      '${p['id'] ?? i + 1}',
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: Row(
-                                                      children: [
-                                                        CircleAvatar(
-                                                          radius: 16,
-                                                          backgroundColor:
-                                                              lightTeal,
-                                                          child: const Icon(
-                                                            Icons.person,
-                                                            size: 18,
-                                                            color: teal,
-                                                          ),
+                                            return Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: isReceptionist
+                                                    ? () =>
+                                                          _goToAppointmentBooking(
+                                                            p,
+                                                          )
+                                                    : null,
+                                                hoverColor: isReceptionist
+                                                    ? lightTeal.withOpacity(0.3)
+                                                    : Colors.transparent,
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: Text(
+                                                          '${p['id'] ?? i + 1}',
                                                         ),
-                                                        const SizedBox(
-                                                          width: 12,
-                                                        ),
-                                                        Text(
-                                                          p['fullName'] ??
-                                                              'N/A',
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 2,
-                                                    child: Text(
-                                                      p['gender'] ?? 'N/A',
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 2,
-                                                    child: Text(
-                                                      p['phone'] ?? '',
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 2,
-                                                    child: Text(
-                                                      p['address'] ?? 'N/A',
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 1,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        IconButton(
-                                                          icon: const Icon(
-                                                            Icons.edit,
-                                                            color: teal,
-                                                            size: 20,
-                                                          ),
-                                                          onPressed: () =>
-                                                              showEditDialog(p),
-                                                          padding:
-                                                              EdgeInsets.zero,
-                                                          constraints:
-                                                              const BoxConstraints(),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        IconButton(
-                                                          icon: const Icon(
-                                                            Icons
-                                                                .delete_outline,
-                                                            color: Colors.red,
-                                                            size: 20,
-                                                          ),
-                                                          onPressed: () =>
-                                                              confirmDelete(
-                                                                p['id']
-                                                                    .toString(),
+                                                      ),
+                                                      Expanded(
+                                                        flex: 3,
+                                                        child: Row(
+                                                          children: [
+                                                            CircleAvatar(
+                                                              radius: 16,
+                                                              backgroundColor:
+                                                                  lightTeal,
+                                                              child: const Icon(
+                                                                Icons.person,
+                                                                size: 18,
+                                                                color: teal,
                                                               ),
-                                                          padding:
-                                                              EdgeInsets.zero,
-                                                          constraints:
-                                                              const BoxConstraints(),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 12,
+                                                            ),
+                                                            Expanded(
+                                                              child: Text(
+                                                                p['fullName'] ??
+                                                                    'N/A',
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                            if (isReceptionist) ...[
+                                                              const SizedBox(
+                                                                width: 8,
+                                                              ),
+                                                              Icon(
+                                                                Icons
+                                                                    .arrow_forward_ios,
+                                                                size: 14,
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade400,
+                                                              ),
+                                                            ],
+                                                          ],
                                                         ),
-                                                      ],
-                                                    ),
+                                                      ),
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Text(
+                                                          p['gender'] ?? 'N/A',
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Text(
+                                                          p['phone'] ?? '',
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        flex: 2,
+                                                        child: Text(
+                                                          p['address'] ?? 'N/A',
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        flex: 1,
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            IconButton(
+                                                              icon: const Icon(
+                                                                Icons.edit,
+                                                                color: teal,
+                                                                size: 20,
+                                                              ),
+                                                              onPressed: () =>
+                                                                  showEditDialog(
+                                                                    p,
+                                                                  ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              constraints:
+                                                                  const BoxConstraints(),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            IconButton(
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .delete_outline,
+                                                                color:
+                                                                    Colors.red,
+                                                                size: 20,
+                                                              ),
+                                                              onPressed: () =>
+                                                                  confirmDelete(
+                                                                    p['id']
+                                                                        .toString(),
+                                                                  ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              constraints:
+                                                                  const BoxConstraints(),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ],
+                                                ),
                                               ),
                                             );
                                           },
@@ -1936,8 +2000,7 @@ class _PatientListPageState extends State<PatientListPage> {
   }
 }
 
-// ───────── SIDEBAR + TOPBAR CODE UNCHANGED ─────────
-// ADDED: Standalone sidebar with all functionality
+// ───────── SIDEBAR + TOPBAR CODE ─────────
 class _AdminSidebar extends StatefulWidget {
   const _AdminSidebar();
 
@@ -2346,7 +2409,7 @@ class _PatientTopBarState extends State<_PatientTopBar> {
 
               const SizedBox(width: 10),
 
-              // CHANGED: Role text - now shows role in small text
+              // Role text - now shows role in small text
               Text(
                 _userRole,
                 style: const TextStyle(
@@ -2357,7 +2420,7 @@ class _PatientTopBarState extends State<_PatientTopBar> {
               ),
               const SizedBox(width: 8),
 
-              // CHANGED: Name badge - Now shows userName instead of role
+              // Name badge - Now shows userName instead of role
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,

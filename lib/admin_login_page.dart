@@ -451,18 +451,6 @@
 //   );
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
@@ -627,7 +615,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     Widget destination;
     switch (serverRole) {
       case 'DOCTOR':
-        destination = const AdminDashboard(); // replace later
+        destination = const DoctorDashboard(); // replace later
         break;
       case 'RECEPTIONIST':
         destination = const PatientListPage();
